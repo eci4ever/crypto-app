@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 1 · The Repo Map</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Lesson 1 · 10 min · <a href="../reference/0001-es-modules.html">reference: ES modules</a> · <a href="../GLOSSARY.md">glossary</a></p>
+  <h1>The Repo Map — how this code becomes a web page</h1>
+  <p class="lede">Before TypeScript or React syntax, you need one mental model: <b>where things live, and how the code flows</b>. Build that model today by tracing your own app from first byte to finished page.</p>
+
+  <div class="callout"><strong>Tied to your mission</strong>
+  You want to maintain this repo. You cannot fix what you cannot find. This lesson gives you the map — everything else (types, props, state) drops onto the map in later lessons.</div>
+
+  <h2>Follow the trail</h2>
+  <p>The browser never reads <code>src/</code> directly. It reads one HTML file, which pulls in JavaScript, which draws the page. The whole app is a <b>pipeline</b>:</p>
+
+  <div class="map">
+    <div class="node"><b>index.html</b> — the single entry point the browser loads</div>
+    <div class="edge">loads script</div>
+    <div class="node"><b>main.tsx</b> — imports CSS, creates the React root</div>
+    <div class="edge">renders</div>
+    <div class="node"><b>App.tsx</b> — the top of the component tree; owns routing</div>
+    <div class="edge">switches between</div>
+    <div class="node"><b>pages / components</b> — the UI you see (Navbar, CoinTable, …)</div>
+  </div>
+
+  <h2>The entry point: <code>index.html</code></h2>
+  <p>Open <code>index.html</code> at the repo root. It's almost empty — deliberately. The two lines that matter:</p>
+  <pre><code>&lt;div id="app"&gt;&lt;/div&gt;
+&lt;script type="module" src="/src/main.tsx"&gt;&lt;/script&gt;</code></pre>
+  <ul>
+    <li><code>&lt;div id="app"&gt;</code> is an empty <b>mount point</b> — a blank slot in the page.</li>
+    <li>The script tag is the <b>only</b> JavaScript entry. Everything else hangs off it.</li>
+  </ul>
+  <p>That's the whole trick of a single-page app: <b>one HTML file, one empty div, one script</b> — and React builds everything else.</p>
+
+  <h2>Mounting: <code>main.tsx</code></h2>
+  <p>Now open <code>src/main.tsx</code>. Four lines do the real work:</p>
+  <pre><code>const queryClient = new QueryClient({ ... })
+
+const root = document.getElementById('app')!
+createRoot(root).render(
+  &lt;QueryClientProvider client={queryClient}&gt;
+    &lt;App /&gt;
+  &lt;/QueryClientProvider&gt;,
+)</code></pre>
+  <p><code>document.getElementById('app')!</code> grabs that empty div. <code>createRoot(...).render(...)</code> tells React: <b>draw <code>&lt;App /&gt;</code> here</b>. The <code>!</code> (non-null assertion) says "I promise this element exists." <code>QueryClientProvider</code> just hands data-fetching powers to everything below.</p>
+
+  <div class="callout"><strong>Note</strong>
+  That's your first <b>JSX</b> — HTML-like syntax written inside a TypeScript file. You'll study it properly next lesson; for now, read <code>&lt;App /&gt;</code> as "render the App component here."</div>
+
+  <h2>The tree: <code>App.tsx</code></h2>
+  <p>Open <code>src/App.tsx</code>. It renders a <code>Navbar</code> and then a <code>Switch</code> — a router that decides which page to show based on the URL:</p>
+  <pre><code>&lt;Route path="/" component={ListPage} /&gt;
+&lt;Route path="/coin/:id" component={CoinPage} /&gt;
+&lt;Route path="/converter" component={ConverterPage} /&gt;
+&lt;Route path="/portfolio" component={PortfolioPage} /&gt;</code></pre>
+  <p>Read the URL bar while you click around the app: <code>/coin/bitcoin</code> means <em>CoinPage, showing bitcoin</em>. Routing is just <b>URL → which component to draw</b>.</p>
+
+  <h2>The glue: imports and exports</h2>
+  <p>Notice how every file above <em>imports</em> the others. <code>main.tsx</code> imports <code>App</code>; <code>App.tsx</code> imports the pages; the pages import components, stores, and services. <b>This import graph <em>is</em> the repo map.</b></p>
+  <p>TypeScript files live in their folders for a reason — <code>pages</code> are screens, <code>components</code> are reusable pieces, <code>stores</code> are shared data, <code>services</code> talk to CoinGecko, <code>utils</code> are pure helpers. Whenever you're lost, the folder name tells you the file's job.</p>
+  <p>Deep-dive when ready: <a href="../reference/0001-es-modules.html">Reference: ES modules (import / export)</a></p>
+
+  <h2>The dev loop: why edits appear instantly</h2>
+  <p>Run <code>npm run dev</code> and open http://localhost:5173. The dev server watches your files. When you save, <b>Hot Module Replacement (HMR)</b> swaps in just the changed piece — no full reload, your app state survives. This is the tightest feedback loop in programming, and it's your best teacher.</p>
+
+  <h2>Your first edit — the skill</h2>
+  <ol>
+    <li>Keep <code>npm run dev</code> running in one terminal.</li>
+    <li>Open <code>src/components/Navbar.tsx</code>.</li>
+    <li>Find the brand line: <code>&lt;span className="text-emerald-400"&gt;₿&lt;/span&gt; Crypto App</code>.</li>
+    <li>Change <code>Crypto App</code> to something personal — your name, your wallet, anything.</li>
+    <li>Save. Look at the browser. That was <b>HMR</b>, and that was your first edit to this codebase.</li>
+  </ol>
+  <p>Made it? Then you have proof you can navigate the map. Undo it (git) or keep it — your call. Then quiz yourself below.</p>
+
+  <h2>Check yourself</h2>
+  <p>Answer from memory — no scrolling up.</p>
+
+  <div class="quiz" data-feedback="Right — index.html is the only file the browser loads. main.tsx is pulled in by a script tag inside it.">
+    <p class="q">1. Which file does the browser load first?</p>
+    <button data-answer="correct">index.html</button>
+    <button data-answer="wrong">main.tsx</button>
+    <button data-answer="wrong">App.tsx</button>
+    <button data-answer="wrong">Navbar.tsx</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — render() paints App into the empty #app div in the HTML.">
+    <p class="q">2. What does createRoot(...).render do?</p>
+    <button data-answer="wrong">Saves App to disk</button>
+    <button data-answer="correct">Paints App in the page</button>
+    <button data-answer="wrong">Sends App to a server</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — HMR swaps only the module you changed, no full page reload.">
+    <p class="q">3. On save, what does the dev server do?</p>
+    <button data-answer="correct">Hot-swaps that module</button>
+    <button data-answer="wrong">Rebuilds the whole app</button>
+    <button data-answer="wrong">Refreshes the browser</button>
+    <p class="feedback"></p>
+  </div>
+
+  <h2>Read or watch (primary source)</h2>
+  <p>This lesson's claims are standard web-browser behavior — verify them where they're defined:</p>
+  <ul>
+    <li><a href="https://vite.dev/guide/">Vite Guide</a> — why <code>index.html</code> is the entry, what the dev server and build do. <em>(Primary for this lesson.)</em></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules">MDN: JavaScript modules</a> — the authoritative words on import/export.</li>
+  </ul>
+
+  <h2>Next</h2>
+  <p class="next">Lesson 2: <b>JSX — writing HTML inside TypeScript</b> (why <code>className</code>, why curly braces, how the Navbar line you edited works).</p>
+
+  <div class="lesson-end">
+    <p><strong>Ask me anything.</strong> If any step here was fuzzy — the mount point, the router, the import graph — reply to your agent and I'll explain it differently before we move on. You're the one who decides when the map is clear.</p>
+    <p>Mission: <a href="../MISSION.md">frontend TypeScript, maintain this repo</a></p>
+  </div>
+</div>
+</body>
+</html>
