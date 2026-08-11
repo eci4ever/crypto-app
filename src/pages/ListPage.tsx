@@ -33,7 +33,7 @@ export default function ListPage() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-100">Cryptocurrency Prices</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Top 50 coins by market cap · refreshed every 60s
+            Top {coins.length} coins by market cap · refreshed every 60s
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -50,11 +50,10 @@ export default function ListPage() {
                 key={value}
                 type="button"
                 onClick={() => setFilter(value)}
-                className={`px-3 py-2 capitalize transition-colors ${
-                  filter === value
+                className={`px-3 py-2 capitalize transition-colors ${filter === value
                     ? 'bg-emerald-600/20 text-emerald-400'
                     : 'text-slate-400 hover:text-slate-200'
-                }`}
+                  }`}
               >
                 {value}
               </button>

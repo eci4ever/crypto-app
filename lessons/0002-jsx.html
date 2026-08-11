@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 2 · JSX</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Lesson 2 · 12 min · <a href="../reference/0002-jsx.html">reference: JSX</a> · <a href="../reference/0001-es-modules.html">reference: ES modules</a></p>
+  <h1>JSX — writing HTML inside TypeScript</h1>
+  <p class="lede">You saw <code>&lt;App /&gt;</code> in Lesson 1 and read it as "render App here." This lesson explains why that line is even legal — and why the files are called <code>.tsx</code>, not <code>.ts</code>.</p>
+
+  <div class="callout"><strong>Tied to your mission</strong>
+  Nearly every file you'll maintain in this repo is JSX: the Navbar line you edited, the table rows, the heart button. Get the three rules below and the code stops looking like magic.</div>
+
+  <h2>A component is a function that returns markup</h2>
+  <p>Open <code>src/components/WatchlistButton.tsx</code>. Strip the imports and state, and what remains is the whole trick:</p>
+  <pre><code>export function WatchlistButton({ id }) {
+  // ...state logic...
+  return (
+    &lt;button onClick={() =&gt; toggle(id)}&gt;
+      {has ? '♥' : '♡'}
+    &lt;/button&gt;
+  )
+}</code></pre>
+  <p><b>JSX is the <code>return (…) </code> part.</b> It's not HTML, and it's not a string — it's markup that the Vite build tool compiles into JavaScript instructions for React. Write it like HTML, and React turns it into actual page elements.</p>
+  <p>Why <code>.tsx</code>? Because a file containing JSX must use the <code>.tsx</code> extension so the compiler knows to expect markup inside the TypeScript.</p>
+
+  <h2>Rule 1 — <code>className</code>, not <code>class</code></h2>
+  <p>JSX isn't HTML, so it doesn't reuse HTML attribute names. The attribute you know as <code>class</code> becomes <code>className</code>. All attributes are camelCase: <code>onClick</code>, <code>aria-label</code> stays hyphenated but others change.</p>
+  <p>You've already used this: every <code>className="rounded-md px-4…"</code> in this repo is Tailwind class names handed to the <code>className</code> attribute.</p>
+
+  <h2>Rule 2 — curly braces <code>{}</code> escape into JavaScript</h2>
+  <p>JSX has two modes:</p>
+  <ul>
+    <li><b>Markup mode</b> — anything written plainly is literal text.</li>
+    <li><b>Expression mode</b> — anything inside <code>{}</code> is real TypeScript.</li>
+  </ul>
+  <pre><code>&lt;p&gt;Price: {formatPrice(coin.current_price, currency)}&lt;/p&gt;
+&lt;button onClick={() =&gt; toggle(id)}&gt;…&lt;/button&gt;</code></pre>
+  <p>Both lines are from your repo (CoinTable and WatchlistButton). The braces let you compute <em>anything</em> at render time. This is why the same code shows different prices each refresh — the function runs fresh on every render.</p>
+
+  <div class="callout"><strong>The one-liner to remember</strong>
+  In JSX, <b>braces <code>{}</code> are the door between the visual world and the code world.</b> No braces → literal text. Braces → run this code.</div>
+
+  <h2>Rule 3 — one root element</h2>
+  <p>A component must return exactly one top-level element. When you need siblings, wrap them — or use an empty fragment:</p>
+  <pre><code>return (
+  &lt;&gt;
+    &lt;h1&gt;Hello&lt;/h1&gt;
+    &lt;p&gt;World&lt;/p&gt;
+  &lt;/&gt;
+)</code></pre>
+  <p>The <code>&lt;&gt;…&lt;/&gt;</code> fragment renders nothing itself — it just groups so the rule holds.</p>
+
+  <h2>Lists: <code>.map()</code> + <code>key</code></h2>
+  <p>How does one row become fifty? <code>CoinTable.tsx</code> maps over the coins array and returns a row per item:</p>
+  <pre><code>{coins.map((coin) =&gt; (
+  &lt;tr key={coin.id}&gt;
+    &lt;td&gt;{coin.market_cap_rank}&lt;/td&gt;
+    &lt;td&gt;{formatPrice(coin.current_price, currency)}&lt;/td&gt;
+  &lt;/tr&gt;
+))}</code></pre>
+  <p><b><code>key</code> matters.</b> React uses it to tell rows apart when the list changes (sorting, filtering, refreshing). Use a stable id — here <code>coin.id</code>, not the loop index.</p>
+
+  <h2>Your edit — the skill</h2>
+  <p>Make the list page tell the truth about what it shows. In <code>src/pages/ListPage.tsx</code>, find this line:</p>
+  <pre><code>&lt;p className="mt-1 text-sm text-slate-400"&gt;
+  Top 50 coins by market cap · refreshed every 60s
+&lt;/p&gt;</code></pre>
+  <p>Change it to use a live expression — the <code>coins</code> variable is already computed above in that same file:</p>
+  <pre><code>&lt;p className="mt-1 text-sm text-slate-400"&gt;
+  Showing {coins.length} coins · refreshed every 60s
+&lt;/p&gt;</code></pre>
+  <ol>
+    <li>Save and watch HMR update it instantly.</li>
+    <li>Type "bit" in the search box — the count now shrinks as you filter.</li>
+    <li>That's <b>braces in action</b>: the number is not hardcoded, it's computed every render.</li>
+  </ol>
+  <p>Finished? Quiz below, from memory.</p>
+
+  <h2>Check yourself</h2>
+
+  <div class="quiz" data-feedback="Right — JSX renames class to className because it's not HTML.">
+    <p class="q">1. What does JSX use instead of class?</p>
+    <button data-answer="correct">className</button>
+    <button data-answer="wrong">class-name</button>
+    <button data-answer="wrong">classname</button>
+    <button data-answer="wrong">CSSClass</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — {coins.length} is a JavaScript expression evaluated each render.">
+    <p class="q">2. What does the {} in a JSX tag do?</p>
+    <button data-answer="wrong">Show literal text</button>
+    <button data-answer="wrong">Import a module</button>
+    <button data-answer="correct">Run an expression</button>
+    <button data-answer="wrong">Wrap the element</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — key lets React track each item as the list changes.">
+    <p class="q">3. Why does map() need a key prop?</p>
+    <button data-answer="wrong">Style each row</button>
+    <button data-answer="wrong">Sort the array</button>
+    <button data-answer="wrong">Speed up output</button>
+    <button data-answer="correct">Track list items</button>
+    <p class="feedback"></p>
+  </div>
+
+  <h2>Read or watch (primary source)</h2>
+  <ul>
+    <li><a href="https://react.dev/learn/writing-markup-with-jsx">react.dev: Writing markup with JSX</a> — the official rules, with interactive examples. <em>(Primary for this lesson.)</em></li>
+    <li><a href="https://react.dev/learn/conditional-rendering">react.dev: Conditional rendering</a> — the <code>?</code>, <code>&amp;&amp;</code>, and <code>if</code> patterns.</li>
+    <li><a href="https://react.dev/learn/rendering-lists">react.dev: Rendering lists</a> — <code>map()</code> and why <code>key</code> exists.</li>
+  </ul>
+
+  <h2>Next</h2>
+  <p class="next">Lesson 3: <b>Types — what TypeScript actually checks</b> (primitives, interfaces, the <code>CoinMarket</code> type you saw in Lesson 1, and how type errors catch bugs before the browser does).</p>
+
+  <div class="lesson-end">
+    <p><strong>Ask me anything.</strong> Confused about why <code>className</code> is camelCase, or how <code>.map()</code> works under the hood? Reply to your agent and we'll slow down before Lesson 3.</p>
+    <p>Mission: <a href="../MISSION.md">frontend TypeScript, maintain this repo</a></p>
+  </div>
+</div>
+</body>
+</html>
