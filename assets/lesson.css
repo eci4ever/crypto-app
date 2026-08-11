@@ -1,0 +1,271 @@
+/* Shared stylesheet for the Frontend-TypeScript teaching workspace.
+   Every lesson links this file so the course looks like one consistent set. */
+
+:root {
+  --ink: #1a1a2e;
+  --ink-soft: #4a4a68;
+  --paper: #fbfaf6;
+  --paper-2: #f1efe6;
+  --rule: #d9d5c8;
+  --accent: #8b5cf6;
+  --accent-ink: #6d3fe0;
+  --good: #15803d;
+  --bad: #b91c1c;
+  --code-bg: #16141f;
+  --code-ink: #e6e1f5;
+  --max-w: 46rem;
+  font-size: 19px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+}
+
+.wrap {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+}
+
+/* ---------- typography ---------- */
+
+h1,
+h2,
+h3 {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height: 1.2;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: 2.1rem;
+  margin: 0 0 0.25rem;
+}
+
+h2 {
+  font-size: 1.45rem;
+  margin: 2.6rem 0 0.6rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+h3 {
+  font-size: 1.1rem;
+  margin: 1.8rem 0 0.4rem;
+}
+
+p {
+  margin: 0.8rem 0;
+}
+
+a {
+  color: var(--accent-ink);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.86em;
+  background: var(--paper-2);
+  padding: 0.12em 0.35em;
+  border-radius: 4px;
+  color: var(--accent-ink);
+}
+
+pre {
+  background: var(--code-bg);
+  color: var(--code-ink);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+
+/* ---------- metadata ---------- */
+
+.meta {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.meta a {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.lede {
+  font-size: 1.15rem;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+/* ---------- callouts ---------- */
+
+.callout {
+  border-left: 4px solid var(--accent);
+  background: var(--paper-2);
+  padding: 0.8rem 1.1rem;
+  border-radius: 0 8px 8px 0;
+  margin: 1.2rem 0;
+  font-size: 0.95rem;
+}
+
+.callout strong {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-ink);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+/* ---------- diagram / repo map ---------- */
+
+.map {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.85rem;
+  margin: 1.2rem 0;
+}
+
+.map .node {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+}
+
+.map .node b {
+  color: var(--accent-ink);
+}
+
+.map .edge {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+
+.map .edge::after {
+  content: "▼";
+  margin-left: 0.4rem;
+}
+
+/* ---------- quiz ---------- */
+
+.quiz {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  margin: 1.4rem 0;
+}
+
+.quiz .q {
+  font-weight: bold;
+  margin: 0 0 0.6rem;
+}
+
+.quiz button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 0.4rem 0;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.quiz button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.quiz button.correct {
+  border-color: var(--good);
+  background: rgba(21, 128, 61, 0.1);
+  color: var(--good);
+}
+
+.quiz button.wrong {
+  border-color: var(--bad);
+  background: rgba(185, 28, 28, 0.08);
+  color: var(--bad);
+}
+
+.quiz button:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.quiz .feedback {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--ink-soft);
+  min-height: 1.2em;
+}
+
+.quiz .feedback.ok {
+  color: var(--good);
+}
+
+.quiz .feedback.no {
+  color: var(--bad);
+}
+
+/* ---------- footer ---------- */
+
+.lesson-end {
+  margin-top: 3.5rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--rule);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.next {
+  margin-top: 2rem;
+}
+
+/* ---------- print ---------- */
+
+@media print {
+  .quiz button.correct,
+  .quiz button.wrong {
+    display: inline-block;
+    width: auto;
+  }
+  body {
+    background: #fff;
+  }
+}

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reference · ES Modules (import / export)</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Reference · Lesson 1 companion</p>
+  <h1>ES Modules — the glue of <code>src/</code></h1>
+  <p class="lede">Every file in <code>src/</code> is a <b>module</b>. Modules <em>export</em> things they want to share and <em>import</em> things they need. That web of imports is how a 50-file app holds together.</p>
+
+  <h2>Export — giving things away</h2>
+  <pre><code>// src/utils/format.ts
+export function formatPrice(price: number, code: string): string {
+  // ...
+}
+
+export const CURRENCIES = ['usd', 'myr']</code></pre>
+
+  <h3>Default export — one main thing</h3>
+  <pre><code>// src/pages/ListPage.tsx
+export default function ListPage() {
+  // ...
+}</code></pre>
+  <p>Many components use <code>export default</code> for the component itself.</p>
+
+  <h2>Import — taking things in</h2>
+  <pre><code>// Named imports — must match the exported name
+import { formatPrice } from '../utils/format.ts'
+import { useSettings } from '../stores/settings.ts'
+
+// Default import — you can name it anything
+import ListPage from '../pages/ListPage.tsx'</code></pre>
+
+  <h3>Relative paths</h3>
+  <pre><code>./name        // same folder
+../name       // one folder up
+../../name    // two folders up</code></pre>
+  <p>Here <code>src/pages/ListPage.tsx</code> imports <code>../components/CoinTable.tsx</code> — up out of <code>pages</code>, into <code>components</code>.</p>
+
+  <h3><code>import type</code> — types only</h3>
+  <pre><code>import type { CoinMarket } from '../services/types.ts'</code></pre>
+  <p>This repo's <code>tsconfig.json</code> sets <code>verbatimModuleSyntax: true</code>, so types MUST use <code>import type</code>. It gets erased at build time — zero runtime cost.</p>
+
+  <h2>Rules of thumb</h2>
+  <ul>
+    <li>One direction only — files <em>import</em> from inside <code>src</code>; <code>index.html</code> only ever loads <code>main.tsx</code>.</li>
+    <li>A component is a function. If a file's only job is one component, it <code>export default</code>s it.</li>
+    <li>Utilities are shared pieces — they use <em>named</em> exports so many files can pick what they need.</li>
+    <li>Circular imports (A imports B, B imports A) are a smell — avoid them.</li>
+  </ul>
+
+  <div class="callout"><strong>Primary source</strong>
+    <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules">MDN: JavaScript modules</a> — the definitive reference on import/export.</div>
+
+  <div class="lesson-end">Part of the <a href="../MISSION.md">mission</a> · <a href="../lessons/0001-repo-map.html">Lesson 1</a></div>
+</div>
+</body>
+</html>
