@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reference · JSX Cheat Sheet</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Reference · Lesson 2 companion</p>
+  <h1>JSX — writing markup inside TypeScript</h1>
+  <p class="lede">A React component is a function that <em>returns markup</em>. That markup is JSX: HTML-like syntax that runs inside a <code>.tsx</code> file and gets compiled to plain JavaScript at build time.</p>
+
+  <h2>The three rules</h2>
+  <ol>
+    <li><b>Return one root element</b> — wrap siblings in a <code>&lt;div&gt;</code> or an empty fragment <code>&lt;&gt;…&lt;/&gt;</code>.</li>
+    <li><b>Close every tag</b> — <code>&lt;br /&gt;</code>, <code>&lt;img /&gt;</code>, never <code>&lt;br&gt;</code>.</li>
+    <li><b>Use camelCase attributes</b> — <code>className</code> (not <code>class</code>), <code>onClick</code> (not <code>onclick</code>), <code>htmlFor</code>.</li>
+  </ol>
+
+  <h2>Curly braces escape into JavaScript</h2>
+  <pre><code>// display a variable
+&lt;p&gt;Price: {price}&lt;/p&gt;
+
+// run a function call
+&lt;td&gt;{formatPrice(coin.current_price, currency)}&lt;/td&gt;
+
+// attributes can use braces too
+&lt;img src={coin.image} width={24} /&gt;</code></pre>
+  <p>Anything between <code>{}</code> is a real JavaScript expression — numbers, strings, function calls, ternaries, even <code>className={condition ? 'a' : 'b'}</code>.</p>
+
+  <h2>Conditional rendering</h2>
+  <pre><code>{has ? '♥' : '♡'}                          // pick one of two
+{isLoading && &lt;p&gt;Loading…&lt;/p&gt;}            // render only if true
+{condition ? (&lt;A /&gt;) : (&lt;B /&gt;)}         // pick between elements</code></pre>
+  <p>No special syntax — just normal JavaScript operators inside braces.</p>
+
+  <h2>Rendering lists</h2>
+  <pre><code>{coins.map((coin) =&gt; (
+  &lt;tr key={coin.id}&gt;…&lt;/tr&gt;
+))}</code></pre>
+  <ul>
+    <li><code>.map()</code> turns an array into an array of elements.</li>
+    <li><b><code>key</code> is required</b> on each item — React uses it to track items as the list changes. Use a stable id, never the array index if the list reorders.</li>
+  </ul>
+
+  <h2>From the repo</h2>
+  <pre><code>// src/components/WatchlistButton.tsx — braces + ternary
+{has ? '♥' : '♡'}
+
+// src/components/CoinTable.tsx — map with keys
+{coins.map((coin) =&gt; (
+  &lt;tr key={coin.id}&gt;
+    &lt;td&gt;{formatPrice(coin.current_price, currency)}&lt;/td&gt;
+  &lt;/tr&gt;
+))}</code></pre>
+
+  <div class="callout"><strong>Primary source</strong>
+    <a href="https://react.dev/learn/writing-markup-with-jsx">react.dev: Writing markup with JSX</a> — the official reference for every rule above.</div>
+
+  <div class="lesson-end">Part of the <a href="../MISSION.md">mission</a> · <a href="../lessons/0001-repo-map.html">Lesson 1</a> · <a href="../lessons/0002-jsx.html">Lesson 2</a></div>
+</div>
+</body>
+</html>
