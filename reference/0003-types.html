@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reference · TypeScript Types Cheat Sheet</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Reference · Lesson 3 companion</p>
+  <h1>Types — TypeScript's safety net</h1>
+  <p class="lede">A <b>type</b> describes the shape of data. TypeScript checks every type in your code before it runs — in your editor and at <code>npm run build</code> time — and refuses to build if something doesn't match.</p>
+
+  <h2>The everyday primitives</h2>
+  <pre><code>let name: string    // text
+let price: number   // any number
+let loading: boolean // true or false</code></pre>
+
+  <h2>Reading a function signature</h2>
+  <pre><code>export function formatPrice(price: number, code: string): string {
+  // … params typed inside, return type after ):
+}
+function(format price   code          ) return
+        ↓        ↓      ↓              ↓
+        name    type    type           type</code></pre>
+  <p>Read it left to right: <em>&quot;formatPrice takes a number called price and a string called code, and returns a string.&quot;</em></p>
+
+  <h2>Describing whole objects — interfaces</h2>
+  <pre><code>interface CoinMarket {
+  id: string
+  symbol: string
+  name: string
+  current_price: number
+  price_change_percentage_24h: number
+  sparkline_in_7d: { price: number[] } | null
+}</code></pre>
+  <p>An interface says: <em>&quot;an object with these fields, of these types.&quot;</em> The <code>| null</code> means &quot;this field can also be absent/empty.&quot; <code>number[]</code> means &quot;an array of numbers.&quot;</p>
+
+  <h2>Inference — most types you don't write</h2>
+  <pre><code>const count = 50      // TS already knows: number
+const title = "Crypto" // TS already knows: string</code></pre>
+  <p>TypeScript <b>infers</b> types from the value on the right. You only <em>write</em> annotations where it can't infer — function parameters and return types.</p>
+
+  <h2>Why you'll care as a maintainer</h2>
+  <p>Types are one way, upstream. If you change <code>formatPrice(price: number, code: string)</code> to <code>code: number</code>, tsc instantly lists <b>every call site</b> that now passes a string — including calls you forgot about. The type error is a to-do list, not an accusation.</p>
+
+  <pre><code>src/utils/format.ts:14:57 - error TS2345
+Argument of type 'number' is not assignable to parameter of type 'string'.</code></pre>
+
+  <div class="callout"><strong>Primary source</strong>
+    <a href="https://www.typescriptlang.org/docs/handbook/2/basic-types.html">TypeScript Handbook: The Basics</a> + <a href="https://www.typescriptlang.org/docs/handbook/2/everyday-types.html">Everyday Types</a> — official, authoritative.</div>
+
+  <div class="lesson-end">Part of the <a href="../MISSION.md">mission</a> · <a href="../lessons/0001-repo-map.html">Lesson 1</a> · <a href="../lessons/0002-jsx.html">Lesson 2</a> · <a href="../lessons/0003-types.html">Lesson 3</a></div>
+</div>
+</body>
+</html>

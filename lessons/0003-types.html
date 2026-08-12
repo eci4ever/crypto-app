@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 3 · Types</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Lesson 3 · 15 min · <a href="../reference/0003-types.html">reference: types</a> · <a href="../reference/0001-es-modules.html">reference: ES modules</a></p>
+  <h1>Types — TypeScript's safety net</h1>
+  <p class="lede">In Lesson 2 you wrote markup. This lesson is about the other half of <code>.tsx</code> — the <b>types</b> that check your work before a browser ever sees it.</p>
+
+  <div class="callout"><strong>Tied to your mission</strong>
+  To maintain this repo you'll read more types than you write. The very first file in your manual — <code>src/services/types.ts</code> — is just a pile of interfaces. After this lesson, that file stops being alphabet soup.</div>
+
+  <h2>What a type is</h2>
+  <p>A <b>type</b> is a description of data's shape. TypeScript reads every file, checks that shapes match everywhere, and refuses to build if they don't. The check happens <b>before</b> the code runs — in your editor (red squiggles) and when you type <code>npm run build</code>.</p>
+
+  <div class="callout"><strong>Why this matters for you</strong>
+  JavaScript only discovers &quot;I passed the wrong thing&quot; <em>at runtime</em>, when the user's on the page. TypeScript discovers it <em>at build time</em>, when you're still sitting in the editor. That's the entire trade: a two-second <code>tsc</code> run instead of a broken site in production.</div>
+
+  <h2>The three primitives you'll meet daily</h2>
+  <pre><code>string    // text:  "bitcoin", "usd"
+number    // any:   64_234, 0.0000012, -3.2
+boolean   // flags: true, false</code></pre>
+  <p>They appear all over <code>src/utils/format.ts</code>. Look at the very first function you read nine lessons from now would be this:</p>
+  <pre><code>export function currencySymbol(code: string): string {
+  return CURRENCY_SYMBOLS[code.toLowerCase()] ?? `${code.toUpperCase()} `
+}</code></pre>
+  <p>Decode it: <em>&quot;<code>currencySymbol</code> takes a <code>string</code> named <code>code</code>, and returns a <code>string</code>.&quot;</em> The <code>: string</code> after the <code>)</code> is the <b>return type</b> — the shape guaranteed to come out.</p>
+
+  <h2>Describing whole objects — interfaces</h2>
+  <p>Numbers and strings describe single values. A coin is a whole object with many fields, so it needs an <b>interface</b>. Open <code>src/services/types.ts</code>:</p>
+  <pre><code>export interface CoinMarket {
+  id: string
+  symbol: string
+  name: string
+  current_price: number
+  price_change_percentage_24h: number
+  sparkline_in_7d: { price: number[] } | null
+}</code></pre>
+  <p>Read it as a contract: <em>&quot;anything claiming to be a <code>CoinMarket</code> must have these fields, and each field must be this type.&quot;</em></p>
+  <ul>
+    <li><code>number[]</code> — an array of numbers (the 7-day sparkline points).</li>
+    <li><code>| null</code> — &quot;this field may also be empty.&quot; The <code>|</code> means <b>or</b>; it's called a <b>union</b>. Some coins don't report a sparkline, so the type admits <code>null</code> as an option.</li>
+  </ul>
+  <p>That's why <code>CoinTable.tsx</code> guards with <code>coin.sparkline_in_7d?.price ?? []</code> before drawing — the types told you it <em>might</em> be null, so the code handles it.</p>
+
+  <h2>Inference — the types you don't write</h2>
+  <p>Most of the time TypeScript guesses for you, from the value on the right:</p>
+  <pre><code>const count = 50        // TS infers: number
+const greeting = "hi"   // TS infers: string</code></pre>
+  <p>You write annotations where inference can't reach: <b>function parameters and return types</b>. Everything else, let it infer.</p>
+
+  <h2>How the safety net catches you — the skill</h2>
+  <p>Try the muscle memory of <b>reading and fixing a type error</b>. This is the single most common task in day-to-day maintenance.</p>
+  <ol>
+    <li>Open <code>src/utils/format.ts</code>.</li>
+    <li>Change <code>formatPrice(price: number, code: string)</code> so <code>code</code> is a <code>number</code>: <code>code: number</code>.</li>
+    <li>Save. Watch your editor draw red squiggles.</li>
+    <li>Run <code>npm run build</code>. tsc will list <b>every call site in the whole app</b> that passes a string to <code>code</code> — with file, line, and column.</li>
+    <li>Read one of the errors. It names the file, the line, and the mismatch (string vs number).</li>
+    <li>Now undo the change (<code>code: string</code> again) and rebuild until clean.</li>
+  </ol>
+  <p>That experiment was the lesson: <b>a type is contagious</b>. Change one signature and tsc hands you the complete repair list — including the call sites you'd never have remembered.</p>
+
+  <h2>Check yourself</h2>
+
+  <div class="quiz" data-feedback="Right — a type describes what shape the data has.">
+    <p class="q">1. What describes a value's shape to TS?</p>
+    <button data-answer="wrong">A string</button>
+    <button data-answer="wrong">A folder</button>
+    <button data-answer="correct">A type</button>
+    <button data-answer="wrong">A browser</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — code: string means the parameter must be a string.">
+    <p class="q">2. In (price: number, code: string)?</p>
+    <button data-answer="correct">Param must be string</button>
+    <button data-answer="wrong">Function returns string</button>
+    <button data-answer="wrong">Code saves a string</button>
+    <button data-answer="wrong">String is optional</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — tsc type-checks at build time, before the browser runs anything.">
+    <p class="q">3. Where are type errors caught?</p>
+    <button data-answer="wrong">Inside the browser</button>
+    <button data-answer="wrong">At the CSS step</button>
+    <button data-answer="wrong">At npm install</button>
+    <button data-answer="correct">At tsc build time</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — sparkline_in_7d is a union with null, so it might be empty.">
+    <p class="q">4. What does | null in an interface mean?</p>
+    <button data-answer="wrong">Null is forbidden</button>
+    <button data-answer="wrong">Null means zero price</button>
+    <button data-answer="correct">Field can be empty</button>
+    <button data-answer="wrong">File can be null</button>
+    <p class="feedback"></p>
+  </div>
+
+  <h2>Read or watch (primary source)</h2>
+  <ul>
+    <li><a href="https://www.typescriptlang.org/docs/handbook/2/basic-types.html">TypeScript Handbook: The Basics</a> — static type checking, inference, everything to do with this lesson. <em>(Primary.)</em></li>
+    <li><a href="https://www.typescriptlang.org/docs/handbook/2/everyday-types.html">TypeScript Handbook: Everyday Types</a> — primitives, interfaces, unions, arrays, in one page.</li>
+  </ul>
+
+  <h2>Next</h2>
+  <p class="next">Lesson 4: <b>Props — sending typed data between components</b> (how <code>CoinTable</code> receives its coins and <code>WatchlistButton</code> its id, using the interfaces from this lesson).</p>
+
+  <div class="lesson-end">
+    <p><strong>Ask me anything.</strong> If the &quot;type is contagious&quot; experiment did something unexpected, or a term is still fuzzy, tell your agent and we'll handle it before Lesson 4.</p>
+    <p>Mission: <a href="../MISSION.md">frontend TypeScript, maintain this repo</a></p>
+  </div>
+</div>
+</body>
+</html>
