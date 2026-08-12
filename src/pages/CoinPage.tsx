@@ -69,11 +69,10 @@ export default function CoinPage() {
                   key={range}
                   type="button"
                   onClick={() => setDays(range)}
-                  className={`px-3 py-1.5 transition-colors ${
-                    days === range
+                  className={`px-3 py-1.5 transition-colors ${days === range
                       ? 'bg-emerald-600/20 text-emerald-400'
                       : 'text-slate-400 hover:text-slate-200'
-                  }`}
+                    }`}
                 >
                   {range}d
                 </button>
@@ -85,7 +84,10 @@ export default function CoinPage() {
             <div className="flex h-72 items-center justify-center text-slate-500">Loading chart…</div>
           )}
           {chartQuery.data?.prices && (
-            <PriceChart prices={chartQuery.data.prices} />
+            <PriceChart
+              prices={chartQuery.data.prices}
+              color={change >= 0 ? '#34d399' : '#f87171'}
+            />
           )}
         </div>
 

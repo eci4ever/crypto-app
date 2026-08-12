@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 5 · State</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Lesson 5 · 15 min · <a href="../reference/0005-state.html">reference: state</a> · <a href="../reference/0004-props.html">reference: props</a></p>
+  <h1>State — when a component remembers</h1>
+  <p class="lede">Props fall from the parent like rain. <b>State</b> is the water the component itself holds. It's what makes the search box retain your typing — and what will finally explain the heart button.</p>
+
+  <div class="callout"><strong>Tied to your mission</strong>
+  Every interactive feature you'll maintain — the search box, the day-range buttons, the portfolio form — is state. Your very first contribution (the <code>{coins.length}</code> count) only works because <code>query</code> state re-renders the page on each keystroke.</div>
+
+  <h2>See state in the wild</h2>
+  <p>Open <code>src/pages/ListPage.tsx</code>, near the top:</p>
+  <pre><code>const [query, setQuery] = useState('')
+const [filter, setFilter] = useState&lt;Filter&gt;('all')</code></pre>
+  <p>Read the first line: <em>&quot;a state variable called <code>query</code>, starting as an empty string, with a setter called <code>setQuery</code>.&quot;</em> That's array destructuring: <code>useState</code> returns two things — the value and the setter — and the brackets pull them apart.</p>
+  <p>This is the moment everything locks together. Every typing session in the search box is those two lines in action:</p>
+  <pre><code>&lt;input
+  value={query}
+  onChange={(e) =&gt; setQuery(e.target.value)}
+/&gt;</code></pre>
+  <ul>
+    <li><b>Read:</b> <code>value={query}</code> shows the current state.</li>
+    <li><b>Write:</b> <code>onChange</code> fires on every keystroke, calls <code>setQuery(e.target.value)</code>, and React <b>re-renders</b> the page with the new text.</li>
+  </ul>
+  <p>That re-render re-runs <code>coins = useMemo(…)</code> with the new query — which is exactly why the count in your Lesson 2 contribution shrinks as you type.</p>
+
+  <h2>Why not just a variable?</h2>
+  <p>The temptation is <code>let query = ''</code>. The problem: <b>every render recreates local variables</b>. The component re-renders, <code>let query</code> is born fresh at <code>''</code>, and the page forgets what you typed — a broken search box.</p>
+  <p>State is the exception: it <b>survives</b> re-renders, and <b>changing it is what causes</b> a re-render in the first place. That one property is the entire reason React exists.</p>
+
+  <h2>The change cycle</h2>
+  <ol>
+    <li>User types &quot;bi&quot; ⟶ <code>onChange</code> fires</li>
+    <li><code>setQuery('bi')</code> ⟶ React notes the change</li>
+    <li>React re-renders the component ⟶ <code>query</code> is now <code>'bi'</code></li>
+    <li>The <code>input value</code>, the filtered <code>coins</code>, and your <code>{coins.length}</code> all refresh</li>
+  </ol>
+  <p>Write a setter, and the rest follows. That's the mental model.</p>
+
+  <h2>Typed state</h2>
+  <p>State can carry a generic type, from Lesson 3:</p>
+  <pre><code>const [days, setDays] = useState&lt;number&gt;(7)      // CoinPage
+const [filter, setFilter] = useState&lt;Filter&gt;('all') // ListPage, union type</code></pre>
+  <p><code>&lt;Filter&gt;</code> means the setter only accepts <code>'all'</code> or <code>'watchlist'</code> — pass anything else and tsc fails. State inherits the whole safety net.</p>
+
+  <h2>Local vs shared state</h2>
+  <p>The heart button never calls <code>useState</code> — it uses Zustand (<code>src/stores/watchlist.ts</code>). One sentence to file this away:</p>
+  <div class="callout"><strong>Rule of thumb</strong>
+  <code>useState</code> = state <em>one</em> component cares about (a search box, a selected day). A <b>store</b> = state many components share (the watchlist hearts, the currency dropdown, the portfolio). Put state as low as it will go; lift it only when siblings need it.</div>
+
+  <h2>Your edit — the skill</h2>
+  <p>Add a <b>Clear button</b> that appears only while you're searching — the classic pattern, and it exercises reading state, writing state, and the conditional rendering from Lesson 2.</p>
+  <p>In <code>src/pages/ListPage.tsx</code>, right after the search <code>&lt;input … /&gt;</code>, add:</p>
+  <pre><code>{query &amp;&amp; (
+  &lt;button
+    type="button"
+    onClick={() =&gt; setQuery('')}
+    className="rounded-md bg-slate-800 px-3 py-2 text-sm text-slate-200 hover:bg-slate-700"
+  &gt;
+    ✕ Clear
+  &lt;/button&gt;
+)}</code></pre>
+  <ol>
+    <li>Save. Type in the search box — the Clear button appears.</li>
+    <li>Click it. <code>setQuery('')</code> empties the state; the button vanishes, the full 50-list returns.</li>
+    <li>Trace it: <code>query</code> truthy ⟶ button rendered; <code>query</code> empty ⟶ nothing. State drove the render.</li>
+  </ol>
+
+  <h2>Check yourself</h2>
+
+  <div class="quiz" data-feedback="Right — useState returns the value and its setter, as a pair.">
+    <p class="q">1. What does useState give back?</p>
+    <button data-answer="wrong">A prop object</button>
+    <button data-answer="wrong">An array map</button>
+    <button data-answer="wrong">A CSS class</button>
+    <button data-answer="correct">Value and setter</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — setQuery schedules a re-render with the new value.">
+    <p class="q">2. Calling setQuery does what?</p>
+    <button data-answer="wrong">Wipes the file</button>
+    <button data-answer="wrong">Fires a network call</button>
+    <button data-answer="wrong">Crashes the app</button>
+    <button data-answer="correct">Re-renders the UI</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — a plain variable is recreated fresh on every render.">
+    <p class="q">3. Why not a plain variable?</p>
+    <button data-answer="wrong">It is too fast</button>
+    <button data-answer="correct">It resets each render</button>
+    <button data-answer="wrong">It cannot typecheck</button>
+    <button data-answer="wrong">It holds no data</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — shared state (watchlist, currency) lives in stores to be shared.">
+    <p class="q">4. Where does shared state live?</p>
+    <button data-answer="correct">In a store</button>
+    <button data-answer="wrong">In a prop</button>
+    <button data-answer="wrong">In a button</button>
+    <button data-answer="wrong">In an API</button>
+    <p class="feedback"></p>
+  </div>
+
+  <h2>Read or watch (primary source)</h2>
+  <ul>
+    <li><a href="https://react.dev/learn/state-a-components-memory">react.dev: State: a component's memory</a> — the ideas behind this lesson. <em>(Primary.)</em></li>
+    <li><a href="https://react.dev/reference/react/useState">react.dev: useState API reference</a> — the exact signature, edge cases, and examples.</li>
+  </ul>
+
+  <h2>Next</h2>
+  <p class="next">Lesson 6: <b>Effects — reaching outside the component</b> (fetching data with TanStack Query, why the CoinGecko API calls work, and the difference between rendering and side effects).</p>
+
+  <div class="lesson-end">
+    <p><strong>Ask me anything.</strong> The re-render cycle, destructuring, or the local-vs-store split — whichever wobbles, tell your agent and we'll not rush.</p>
+    <p>Mission: <a href="../MISSION.md">frontend TypeScript, maintain this repo</a></p>
+  </div>
+</div>
+</body>
+</html>

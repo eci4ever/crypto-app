@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reference · State Cheat Sheet</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Reference · Lesson 5 companion</p>
+  <h1>State — when a component remembers</h1>
+  <p class="lede">Props are handed in; <b>state</b> is remembered inside. State changes trigger React to re-render the component with the new value.</p>
+
+  <h2>The useState hook</h2>
+  <pre><code>const [query, setQuery] = useState('')</code></pre>
+  <p><code>useState</code> returns a pair: the <b>current value</b> and a <b>setter</b>. The convention is to name them <code>[thing, setThing]</code> — that's array destructuring, from the core JS you know.</p>
+
+  <h2>Read and write</h2>
+  <pre><code>// read — use it anywhere in render
+&lt;input value={query} onChange={(e) =&gt; setQuery(e.target.value)} /&gt;
+
+{query.length &gt; 0 &amp;&amp; (
+  &lt;button onClick={() =&gt; setQuery('')}&gt;Clear&lt;/button&gt;
+)}</code></pre>
+  <ul>
+    <li><code>value={query}</code> — the input shows the current state (controlled input).</li>
+    <li><code>setQuery(e.target.value)</code> — every keystroke writes new state; React re-renders.</li>
+    <li><code>setQuery('')</code> — reset it.</li>
+  </ul>
+
+  <h2>Why not a plain variable?</h2>
+  <pre><code>let query = ''          // reset to '' every render — useless
+const [query, setQuery] = useState('')  // survives; change re-renders</code></pre>
+  <p>A plain variable forgets its value on every re-render. State is the thing that <b>survives</b> renders and <b>triggers</b> them.</p>
+
+  <h2>Typed state</h2>
+  <pre><code>const [days, setDays] = useState&lt;number&gt;(7)
+const [filter, setFilter] = useState&lt;Filter&gt;('all')</code></pre>
+  <p>The generic <code>&lt;T&gt;</code> sets the value's type. <code>Filter</code> is a union (<code>'all' | 'watchlist'</code>), so setting an invalid value fails type-checking.</p>
+
+  <h2>Local vs shared state</h2>
+  <ul>
+    <li><b>Local state</b> (<code>useState</code>) — belongs to one component: a search box, a selected day range.</li>
+    <li><b>Shared state</b> (Zustand stores in this repo) — needed by many components: watchlist, portfolio, chosen currency.</li>
+  </ul>
+  <p>Rule of thumb: put state <em>as low as possible</em>. Only lift it up when siblings need to share it.</p>
+
+  <div class="callout"><strong>Primary source</strong>
+    <a href="https://react.dev/reference/react/useState">react.dev: useState</a> — the official API reference.</div>
+
+  <div class="lesson-end">Part of the <a href="../MISSION.md">mission</a> · <a href="../lessons/0004-props.html">Lesson 4</a> · <a href="../lessons/0005-state.html">Lesson 5</a></div>
+</div>
+</body>
+</html>
