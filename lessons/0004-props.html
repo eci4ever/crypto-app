@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 4 · Props</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Lesson 4 · 15 min · <a href="../reference/0004-props.html">reference: props</a> · <a href="../reference/0003-types.html">reference: types</a></p>
+  <h1>Props — sending typed data between components</h1>
+  <p class="lede">Lesson 2 made you read <code>&lt;App /&gt;</code>. This lesson makes you read <code>&lt;CoinTable coins={coins} currency={currency} /&gt;</code> — the moment a component stops being a drawing and becomes a <b>function with arguments</b>.</p>
+
+  <div class="callout"><strong>Tied to your mission</strong>
+  Almost every maintenance task starts with a prop: adding a column to the table, colouring a chart, passing a value down. Props are where <em>JSX</em> meets <em>types</em> — the two lessons you just did, fused.</div>
+
+  <h2>Props are function arguments</h2>
+  <p>You know what a function parameter is:</p>
+  <pre><code>function formatPrice(price, code) { … }   // parameters
+formatPrice(100, 'usd')                      // arguments!</code></pre>
+  <p>A component is exactly that function — the JSX attributes are its arguments. The parent says &quot;here's your data,&quot; the child receives it, read-only.</p>
+  <p>Open <code>src/pages/ListPage.tsx</code>; near the bottom the table is used like this:</p>
+  <pre><code>&lt;CoinTable coins={coins} currency={currency} /&gt;</code></pre>
+  <p>And open <code>src/components/CoinTable.tsx</code>; its first lines receive them:</p>
+  <pre><code>interface CoinTableProps {
+  coins: CoinMarket[]
+  currency: string
+}
+
+export default function CoinTable({ coins, currency }: CoinTableProps) {</code></pre>
+  <ul>
+    <li><code>interface CoinTableProps</code> — the <b>contract</b> (Lesson 3): &quot;whoever renders CoinTable must give me a coin array and a currency string.&quot;</li>
+    <li><code>{ coins, currency }</code> — <b>destructuring</b> in the parameter list. It pulls those two fields out of the props object so you can use them as plain variables below.</li>
+    <li><code>: CoinTableProps</code> — type it, and every call site is checked. Pass <code>currency={42}</code> and tsc slaps you before the browser does.</li>
+  </ul>
+
+  <h2>One way, top-down</h2>
+  <p>Data flows <b>down only</b>: <code>App</code> renders the pages, the pages fetch and filter, then hand the results down to <code>CoinTable</code>, which hands shape data to <code>Sparkline</code>. A child never browses up to find its own data — it only sees what it's given.</p>
+  <p>That's why <code>WatchlistButton</code> only takes an <code>id</code>:</p>
+  <pre><code>export function WatchlistButton({ id }: WatchlistButtonProps) {</code></pre>
+  <p>It doesn't need the whole coin — a single string is the whole contract.</p>
+
+  <div class="callout"><strong>The key rule</strong>
+  Props are <b>read-only</b>. If a child wants something to change, it calls a function it received as a prop (like <code>onClick={() =&gt; toggle(id)}</code>) and lets the <em>parent</em> re-render with new props. Change flows up; data flows down.</div>
+
+  <h2>Defaults — a prop that always has a value</h2>
+  <p>Open <code>src/components/PriceChart.tsx</code>:</p>
+  <pre><code>export function PriceChart({ prices, color = '#34d399' }: PriceChartProps) {</code></pre>
+  <p><code>color = '#34d399'</code> is a <b>default parameter</b>. If the parent doesn't pass <code>color</code>, the chart draws emerald green. It's a prop a caller can omit — but the child never sees <code>undefined</code>.</p>
+
+  <h2>Your edit — the skill</h2>
+  <p>Make the coin page's chart <b>behave like the rest of the app</b>: red on a down day, green on an up day. You already have the change percentage in <code>CoinPage.tsx</code> (the <code>change</code> variable from <code>md.price_change_percentage_24h</code>).</p>
+  <ol>
+    <li>Open <code>src/pages/CoinPage.tsx</code> and find line 88: <code>&lt;PriceChart prices={chartQuery.data.prices} /&gt;</code>.</li>
+    <li>Pass a <code>color</code> prop, computed with the same conditional you saw in Lesson 2:</li>
+  </ol>
+  <pre><code>&lt;PriceChart
+  prices={chartQuery.data.prices}
+  color={change &gt;= 0 ? '#34d399' : '#f87171'}
+/&gt;</code></pre>
+  <ol start="3">
+    <li>Save. On a red coin (down 24h), the line flips to red; on green, it stays green.</li>
+    <li>Flip a day range (1d / 7d) on a coin to see the colour tracked from the same source.</li>
+  </ol>
+  <p>That's a props edit: you read the <em>contract</em> (the default on line 1 of PriceChart), made the value dynamic, and the type system checked it.</p>
+
+  <h2>Check yourself</h2>
+
+  <div class="quiz" data-feedback="Right — props are the data handed from parent to child.">
+    <p class="q">1. What are props in a component?</p>
+    <button data-answer="wrong">Files on disk</button>
+    <button data-answer="wrong">Page styling</button>
+    <button data-answer="correct">Data from parent</button>
+    <button data-answer="wrong">Bundled scripts</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — braces make it a live JavaScript value, not text.">
+    <p class="q">2. In after={coins}, the braces do what?</p>
+    <button data-answer="correct">Pass a real value</button>
+    <button data-answer="wrong">Print the literally</button>
+    <button data-answer="wrong">Import the module</button>
+    <button data-answer="wrong">Skip the prop now</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — props are read-only; the parent owns all changes.">
+    <p class="q">3. Can a child change its props?</p>
+    <button data-answer="wrong">Yes, always safe</button>
+    <button data-answer="correct">No, read-only</button>
+    <button data-answer="wrong">Only in staging</button>
+    <button data-answer="wrong">Only in builds</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — the = default catches the missing case so color is never undefined.">
+    <p class="q">4. color = '#34d399' stands for what?</p>
+    <button data-answer="wrong">A CSS import</button>
+    <button data-answer="wrong">An error colour</button>
+    <button data-answer="correct">The fallback value</button>
+    <button data-answer="wrong">The required prop</button>
+    <p class="feedback"></p>
+  </div>
+
+  <h2>Read or watch (primary source)</h2>
+  <ul>
+    <li><a href="https://react.dev/learn/passing-props-to-a-component">react.dev: Passing props to a component</a> — props from first principles, with interactive examples. <em>(Primary for this lesson.)</em></li>
+  </ul>
+
+  <h2>Next</h2>
+  <p class="next">Lesson 5: <b>State — when a component remembers</b> (why the counter search box remembers its text, <code>useState</code>, and how <code>WatchlistButton</code>'s heart toggles).</p>
+
+  <div class="lesson-end">
+    <p><strong>Ask me anything.</strong> Destructuring still odd? The read-only rule feels weird? Tell your agent — these are exactly the things to slow down on before state in Lesson 5.</p>
+    <p>Mission: <a href="../MISSION.md">frontend TypeScript, maintain this repo</a></p>
+  </div>
+</div>
+</body>
+</html>

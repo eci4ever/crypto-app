@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reference · Props Cheat Sheet</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Reference · Lesson 4 companion</p>
+  <h1>Props — sending typed data between components</h1>
+  <p class="lede"><b>Props</b> are the arguments a parent passes to a child component. Data flows <em>one way only</em>: down.</p>
+
+  <h2>Reading a component that takes props</h2>
+  <pre><code>interface CoinTableProps {
+  coins: CoinMarket[]   // array of coin objects
+  currency: string
+}
+
+export default function CoinTable({ coins, currency }: CoinTableProps) {
+  // coins and currency are now variables, guaranteed typed
+}</code></pre>
+  <p>The <code>{ coins, currency }</code> in the parameter list is <b>destructuring</b> — pulling named fields out of the props object.</p>
+
+  <h2>Passing props (the parent side)</h2>
+  <pre><code>&lt;CoinTable coins={coins} currency={currency} /&gt;</code></pre>
+  <p>Looks like an HTML attribute, but the <b>braces</b> make it a JavaScript value — the same <code>{}</code> rule from Lesson 2.</p>
+
+  <h2>Default value / optional prop</h2>
+  <pre><code>export function PriceChart({ prices, color = '#34d399' }: PriceChartProps) {
+  // ...</code></pre>
+  <p><code>color = '#34d399'</code> is a default parameter: if the parent doesn't pass <code>color</code>, it falls back to green. The prop is technically still required-safe because it always has a value.</p>
+
+  <h2>Rules of props</h2>
+  <ul>
+    <li><b>Read-only in the child.</b> A child can never change its props. To change something, the parent re-renders with a new value.</li>
+    <li><b>Flow down.</b> <code>App</code> → pages → components. Children don't reach up; they ask parents to change things via callbacks passed as props (e.g. <code>onClick</code>).</li>
+    <li><b>Typed.</b> Pass the wrong type and tsc fails at build time — the same safety net as Lesson 3.</li>
+  </ul>
+
+  <h2>From the repo</h2>
+  <pre><code>// ListPage.tsx passes coins and currency down
+&lt;CoinTable coins={coins} currency={currency} /&gt;
+
+// WatchlistButton only needs one id
+export function WatchlistButton({ id }: WatchlistButtonProps) {
+  // ...</code></pre>
+
+  <div class="callout"><strong>Primary source</strong>
+    <a href="https://react.dev/learn/passing-props-to-a-component">react.dev: Passing props to a component</a> — the official reference.</div>
+
+  <div class="lesson-end">Part of the <a href="../MISSION.md">mission</a> · <a href="../lessons/0002-jsx.html">Lesson 2</a> · <a href="../lessons/0003-types.html">Lesson 3</a> · <a href="../lessons/0004-props.html">Lesson 4</a></div>
+</div>
+</body>
+</html>
