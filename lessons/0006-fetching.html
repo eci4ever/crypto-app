@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 6 · Data Fetching</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Lesson 6 · 15 min · <a href="../reference/0006-fetching.html">reference: fetching</a> · <a href="../reference/0001-es-modules.html">reference: ES modules</a></p>
+  <h1>Data fetching — reaching outside the component</h1>
+  <p class="lede">Every price on your screen arrives from a server in Malaysia or worldwide — by a network call. This lesson is the whole journey: <b>component → hook → fetch → CoinGecko → back to the table.</b></p>
+
+  <div class="callout"><strong>Tied to your mission</strong>
+  The single most common thing you'll maintain in this app is a data call: a new endpoint, a changed field, an error state. If you can read one <code>useQuery</code>, you can read them all — there are exactly four in this repo.</div>
+
+  <h2>Why fetching is special</h2>
+  <p>So far every component has been <b>pure</b>: props in, JSX out, no surprises. Fetching breaks that — it's an <b>async side effect</b> that can take 200ms or fail entirely. You don't want that logic tangled inside the JSX. The repo's answer: wrap it in a <b>hook</b>, and let a library manage the mess.</p>
+
+  <h2>Read one hook, read them all</h2>
+  <p>Open <code>src/hooks/useMarket.ts</code> — the smallest and most used:</p>
+  <pre><code>export function useMarket(currency: string) {
+  return useQuery({
+    queryKey: ['market', currency],
+    queryFn: () =&gt; fetchMarket(currency),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+}</code></pre>
+  <p>Four options, four questions answered:</p>
+  <ul>
+    <li><b>queryKey</b> — &quot;what are we fetching, exactly?&quot; <code>['market', currency]</code>. Change <code>currency</code>, get a different cache. This is why switching the navbar dropdown swaps the whole table's prices without reloading.</li>
+    <li><b>queryFn</b> — &quot;how do we fetch it?&quot; A function that must return the data (async counts).</li>
+    <li><b>refetchInterval</b> — &quot;how often do we refresh?&quot; 60_000 ms — the &quot;refreshed every 60s&quot; in your Lesson 2 subtitle.</li>
+    <li><b>staleTime</b> — &quot;how old may cached data be before we bother?&quot; 30 seconds. Stay inside CoinGecko's rate limits without going stale.</li>
+  </ul>
+  <p>That 6-line hook is a self-contained feature. This is the maintainer's mental model: <b>one hook = one data concern</b>.</p>
+
+  <h2>What the hook hands back</h2>
+  <p>Now the consumer. In <code>src/pages/ListPage.tsx</code>:</p>
+  <pre><code>const { data, isLoading, isError } = useMarket(currency)</code></pre>
+  <p>And the page branches on them — you saw these three states already without knowing it:</p>
+  <pre><code>{isLoading &amp;&amp; &lt;div&gt;Loading market data…&lt;/div&gt;}
+{isError   &amp;&amp; &lt;div&gt;Failed to load market data…&lt;/div&gt;}
+{!isLoading &amp;&amp; !isError &amp;&amp; &lt;CoinTable coins={coins} currency={currency} /&gt;}</code></pre>
+  <p><code>data</code> is <b>typed</b>: because <code>fetchMarket</code> returns <code>Promise&lt;CoinMarket[]&gt;</code>, <code>data</code> is a <code>CoinMarket[]</code> and every field you touch is checked. One wrong field name = tsc error, not a broken table at 2am.</p>
+
+  <h2>Under the hook: fetch + Promise</h2>
+  <p>Hooks never touch the network themselves — they call the service layer. Open <code>src/services/coingecko.ts</code>:</p>
+  <pre><code>export async function fetchMarket(currency: string, perPage = 50): Promise&lt;CoinMarket[]&gt; {
+  const params = new URLSearchParams({ vs_currency: currency, ... })
+  const res = await fetch(`${BASE_URL}/coins/markets?${params}`)
+  if (!res.ok) throw new Error(`CoinGecko request failed: ${res.status}`)
+  return (await res.json()) as CoinMarket[]
+}</code></pre>
+  <p>Three async concepts, and that's your whole toolkit for a while:</p>
+  <ul>
+    <li><code>async</code> — this function returns a <b>Promise</b> (a &quot;later, maybe&quot; value).</li>
+    <li><code>await</code> — pause right here until the network answers, then use the value. Code reads top-to-bottom despite the wait.</li>
+    <li><code>as CoinMarket[]</code> — a <b>type assertion</b>. JSON from the wild has no types; we promise it matches our interface. This is the one place a hand-written claim is OK — at the door where data enters the app.</li>
+  </ul>
+  <p>Notice the error line: <code>throw new Error(...)</code>. That's how <code>isError</code> becomes true — the query catches the thrown error and flips the flag.</p>
+
+  <h2>Your edit — the skill</h2>
+  <p>Give the user a <b>manual Refresh button</b> — a real feature, and it exercises the hook's return values you just learned.</p>
+  <ol>
+    <li>In <code>src/pages/ListPage.tsx</code> line 15, add two more values:</li>
+  </ol>
+  <pre><code>const { data, isLoading, isError, refetch, isFetching } = useMarket(currency)</code></pre>
+  <ol start="2">
+    <li>In the header, next to the search/filter controls, add:</li>
+  </ol>
+  <pre><code>&lt;button
+  type="button"
+  onClick={() =&gt; refetch()}
+  disabled={isFetching}
+  className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200 transition-colors hover:bg-slate-800 disabled:opacity-50"
+&gt;
+  {isFetching ? 'Refreshing…' : 'Refresh'}
+&lt;/button&gt;</code></pre>
+  <ol start="3">
+    <li>Save. Click <b>Refresh</b> — it shows &quot;Refreshing…&quot; then updates. Watch the network tab in DevTools to see the request hit CoinGecko.</li>
+    <li>Notice it doesn't flash a loading screen: <code>refetch</code> is a <b>background</b> refresh — <code>isFetching</code> is true, <code>isLoading</code> stays false because data already exists.</li>
+  </ol>
+  <p>You just added a feature by consuming three return values of a hook. That's maintenance.</p>
+
+  <h2>Check yourself</h2>
+
+  <div class="quiz" data-feedback="Right — queryFn is the async function that fetches the data.">
+    <p class="q">1. What does queryFn hold?</p>
+    <button data-answer="wrong">The page styles</button>
+    <button data-answer="wrong">The cache key</button>
+    <button data-answer="correct">The fetch function</button>
+    <button data-answer="wrong">The button text</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — refetchInterval polls on a timer in milliseconds.">
+    <p class="q">2. refetchInterval: 60_000 means?</p>
+    <button data-answer="wrong">Fetch once ever</button>
+    <button data-answer="wrong">Clear the cache</button>
+    <button data-answer="correct">Refetch every 60s</button>
+    <button data-answer="wrong">Sort by volume</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — await pauses the function until the Promise settles.">
+    <p class="q">3. What does await do?</p>
+    <button data-answer="wrong">Cancels the fetch</button>
+    <button data-answer="wrong">Throws an error</button>
+    <button data-answer="wrong">Renders the JSON</button>
+    <button data-answer="correct">Pauses for the value</button>
+    <p class="feedback"></p>
+  </div>
+
+  <div class="quiz" data-feedback="Right — isError flips true when queryFn throws, driving the error UI.">
+    <p class="q">4. When does isError become true?</p>
+    <button data-answer="wrong">When data is fresh</button>
+    <button data-answer="correct">When fetch throws</button>
+    <button data-answer="wrong">When user filters</button>
+    <button data-answer="wrong">On the first render</button>
+    <p class="feedback"></p>
+  </div>
+
+  <h2>Read or watch (primary source)</h2>
+  <ul>
+    <li><a href="https://tanstack.com/query/latest/docs/framework/react/overview">TanStack Query docs — overview</a> — the official source for <code>useQuery</code> and its return values. <em>(Primary for this lesson.)</em></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">MDN: Promise</a> — the async foundation if <code>await</code> still feels odd.</li>
+    <li><a href="https://vite.dev/guide/">Vite Guide</a> — the <code>VITE_</code> env if you ever want to move the CoinGecko base URL.</li>
+  </ul>
+
+  <h2>Next</h2>
+  <p class="next">Lesson 7: <b>The request lifecycle</b> — put the last five lessons together by tracing one real flow: opening <code>/coin/bitcoin</code> end-to-end, from URL to chart.</p>
+
+  <div class="lesson-end">
+    <p><strong>Ask me anything.</strong> <code>async/await</code>, cache keys, or the background-refresh nuance — if any of it wobbles, tell your agent and we'll slow down before the big recap.</p>
+    <p>Mission: <a href="../MISSION.md">frontend TypeScript, maintain this repo</a></p>
+  </div>
+</div>
+</body>
+</html>

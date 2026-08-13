@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reference · Data Fetching Cheat Sheet</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Reference · Lesson 6 companion</p>
+  <h1>Data fetching — reaching outside the component</h1>
+  <p class="lede">Rendering is pure. <b>Fetching</b> is a side effect — an async trip to CoinGecko. This repo handles it with <b>TanStack Query</b> (<code>useQuery</code>), wrapped in small hooks.</p>
+
+  <h2>The parts of a useQuery call</h2>
+  <pre><code>export function useMarket(currency: string) {
+  return useQuery({
+    queryKey: ['market', currency],   // cache identity — same key, same result
+    queryFn: () =&gt; fetchMarket(currency), // the async function that fetches
+    refetchInterval: 60_000,          // auto-refetch every 60s
+    staleTime: 30_000,                // treat data as fresh for 30s
+  })
+}</code></pre>
+  <ul>
+    <li><b>queryKey</b> — a unique label. <code>['market', 'usd']</code> and <code>['market', 'myr']</code> are two separate caches.</li>
+    <li><b>queryFn</b> — must be async; returns the data.</li>
+    <li><b>refetchInterval</b> — background polling, in milliseconds.</li>
+    <li><b>staleTime</b> — how long the cached data is &quot;good enough&quot; before refetching.</li>
+  </ul>
+
+  <h2>What the hook hands back</h2>
+  <pre><code>const { data, isLoading, isError, refetch, isFetching } = useMarket(currency)</code></pre>
+  <table>
+    <tr><td><code>data</code></td><td>the fetched value (typed!)</td></tr>
+    <tr><td><code>isLoading</code></td><td>true on first load, no data yet</td></tr>
+    <tr><td><code>isError</code></td><td>true if queryFn threw</td></tr>
+    <tr><td><code>refetch</code></td><td>a function to force a fresh fetch</td></tr>
+    <tr><td><code>isFetching</code></td><td>true during <em>any</em> fetch (incl. background)</td></tr>
+  </table>
+  <p>Types come from <code>queryFn</code>'s return type — so <code>data</code> is a <code>CoinMarket[]</code>, and misusing it fails type-checking.</p>
+
+  <h2>Underneath: fetch + Promise</h2>
+  <pre><code>async function fetchMarket(currency: string): Promise&lt;CoinMarket[]&gt; {
+  const res = await fetch(url)       // network call, returns a Response
+  if (!res.ok) throw new Error(...)  // errors are thrown, not ignored
+  return (await res.json()) as CoinMarket[]  // JSON → typed object
+}</code></pre>
+  <p>Three async keywords, all you'll need for a while:</p>
+  <ul>
+    <li><code>async</code> — marks the function as returning a <b>Promise</b>.</li>
+    <li><code>await</code> — pauses until a Promise settles, then gives you the value.</li>
+    <li><code>as CoinMarket[]</code> — a <b>type assertion</b>: &quot;I promise this JSON has that shape.&quot; (Used only at the edge of the app, where data enters.)</li>
+  </ul>
+
+  <h2>The flow, end to end</h2>
+  <p><code>ListPage</code> calls <code>useMarket(currency)</code> → Query runs <code>fetchMarket</code> → <code>fetch</code> talks to CoinGecko → JSON → typed <code>data</code> → rendered by <code>CoinTable</code>.</p>
+
+  <div class="callout"><strong>Primary source</strong>
+    <a href="https://tanstack.com/query/latest/docs/framework/react/overview">TanStack Query docs</a> (official) and <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">MDN: Promise</a> for async basics.</div>
+
+  <div class="lesson-end">Part of the <a href="../MISSION.md">mission</a> · <a href="../lessons/0005-state.html">Lesson 5</a> · <a href="../lessons/0006-fetching.html">Lesson 6</a></div>
+</div>
+</body>
+</html>
