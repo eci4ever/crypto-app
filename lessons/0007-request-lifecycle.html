@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 7 · The Request Lifecycle</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Lesson 7 · 15 min · <a href="../reference/0007-request-lifecycle.html">reference: request lifecycle</a> · <a href="../reference/0006-fetching.html">reference: fetching</a></p>
+  <h1>The request lifecycle — URL to chart</h1>
+  <p class="lede">Open <code>/coin/bitcoin</code> and several files cooperate in sequence. Today you will trace that sequence instead of reading each file in isolation.</p>
+
+  <div class="callout"><strong>Tied to your mission</strong>
+  Most maintenance starts with a visible symptom: a URL fails, a spinner never stops, or a chart is blank. Tracing the value through each layer tells you which file owns the problem.</div>
+
+  <h2>1. The route chooses the page</h2>
+  <p>In <code>src/App.tsx</code>, wouter compares the browser URL with each route:</p>
+  <pre><code>&lt;Route path="/coin/:id" component={CoinPage} /&gt;</code></pre>
+  <p>The colon makes <code>:id</code> a route parameter. For <code>/coin/bitcoin</code>, wouter renders <code>CoinPage</code> and records <code>id = 'bitcoin'</code>.</p>
+
+  <h2>2. The page reads inputs</h2>
+  <p>At the top of <code>src/pages/CoinPage.tsx</code>:</p>
+  <pre><code>const { id } = useParams()
+const currency = useSettings((s) =&gt; s.currency)
+const [days, setDays] = useState&lt;number&gt;(7)</code></pre>
+  <p>The request has three inputs from three places:</p>
+  <ul>
+    <li><code>id</code> comes from the URL.</li>
+    <li><code>currency</code> comes from the shared settings store.</li>
+    <li><code>days</code> comes from this page's local state.</li>
+  </ul>
+
+  <h2>3. Hooks describe two requests</h2>
+  <pre><code>const coinQuery = useCoin(id ?? '')
+const chartQuery = useMarketChart(id ?? '', currency, days)</code></pre>
+  <p>The detail request needs only the coin ID. The chart request needs all three inputs. <code>id ?? ''</code> means “use the ID unless it is null or undefined; otherwise use an empty string.”</p>
+  <p>Follow the chart into <code>src/hooks/useMarketChart.ts</code>:</p>
+  <pre><code>queryKey: ['marketChart', id, currency, days],
+queryFn: () =&gt; fetchMarketChart(id, currency, days)</code></pre>
+  <p>The key is a dependency list and cache address. Clicking <b>30d</b> changes <code>days</code>, which produces a new key, so TanStack Query requests and caches a different chart.</p>
+
+  <h2>4. The service builds the HTTP request</h2>
+  <p><code>src/services/coingecko.ts</code> turns those typed values into a URL:</p>
+  <pre><code>const params = new URLSearchParams({
+  vs_currency: currency,
+  days: String(days),
+})
+return request(`/coins/${encodeURIComponent(id)}/market_chart?${params}`)</code></pre>
+  <p><code>URLSearchParams</code> handles query-string formatting. <code>encodeURIComponent</code> makes the path value safe. The shared <code>request&lt;T&gt;</code> helper performs <code>fetch</code>, rejects bad HTTP responses, and parses JSON.</p>
+
+  <h2>5. Query state drives the render</h2>
+  <p>The Promise settles and TanStack Query updates <code>chartQuery</code>. React re-renders the page:</p>
+  <pre><code>isLoading  → show “Loading chart…”
+isError with no data → show an error and retry action
+data       → render &lt;PriceChart prices={...} /&gt;</code></pre>
+  <p>This is the complete loop: an input changes, the query key changes, a request runs, query state changes, and React renders the matching UI. Checking <code>!chartQuery.data</code> avoids replacing a usable cached chart when only a background refresh fails.</p>
+
+  <h2>Your edit — complete the lifecycle</h2>
+  <p>The page already handles chart loading and success, but not chart failure. In <code>CoinPage.tsx</code>, after the loading block, add:</p>
+  <pre><code>{chartQuery.isError &amp;&amp; !chartQuery.data &amp;&amp; (
+  &lt;div className="flex h-72 flex-col items-center justify-center gap-3 text-red-300"&gt;
+    &lt;p&gt;Could not load chart data.&lt;/p&gt;
+    &lt;button
+      type="button"
+      onClick={() =&gt; chartQuery.refetch()}
+      className="rounded-md border border-red-800 px-3 py-1.5 text-sm transition-colors hover:bg-red-950/40"
+    &gt;
+      Try again
+    &lt;/button&gt;
+  &lt;/div&gt;
+)}</code></pre>
+  <ol>
+    <li>Open a coin page and use DevTools to switch the network offline.</li>
+    <li>Change the day range. The chart request fails and the new error state appears.</li>
+    <li>Go online and click <b>Try again</b>. The same query runs again and success replaces the error.</li>
+  </ol>
+
+  <h2>Debug from the symptom</h2>
+  <ul>
+    <li>Wrong page opens → inspect <code>App.tsx</code> and the link that built the URL.</li>
+    <li>Wrong coin loads → inspect <code>useParams</code> and the query key.</li>
+    <li>Wrong endpoint or parameters → inspect <code>coingecko.ts</code>.</li>
+    <li>Request succeeds but UI is wrong → inspect <code>CoinPage</code>, types, and child props.</li>
+  </ul>
+
+  <h2>Check yourself</h2>
+  <div class="quiz" data-feedback="Right — :id captures the matching URL segment as a route parameter.">
+    <p class="q">1. What does <code>:id</code> mean in the route?</p>
+    <button data-answer="wrong">A CSS selector</button><button data-answer="correct">A URL parameter</button><button data-answer="wrong">A query cache</button><button data-answer="wrong">A TypeScript type</button><p class="feedback"></p>
+  </div>
+  <div class="quiz" data-feedback="Right — a changed key identifies different data and triggers its query.">
+    <p class="q">2. Why does clicking 30d fetch a new chart?</p>
+    <button data-answer="wrong">The route changes</button><button data-answer="wrong">The component reloads</button><button data-answer="correct">The query key changes</button><button data-answer="wrong">The browser refreshes</button><p class="feedback"></p>
+  </div>
+  <div class="quiz" data-feedback="Right — the service layer owns endpoint construction and HTTP work.">
+    <p class="q">3. Which layer builds the CoinGecko URL?</p>
+    <button data-answer="wrong">Route</button><button data-answer="wrong">Component</button><button data-answer="wrong">Store</button><button data-answer="correct">Service</button><p class="feedback"></p>
+  </div>
+  <div class="quiz" data-feedback="Right — refetch reruns the current query without changing its inputs.">
+    <p class="q">4. What does the retry button call?</p>
+    <button data-answer="correct">chartQuery.refetch()</button><button data-answer="wrong">setDays(0)</button><button data-answer="wrong">useParams()</button><button data-answer="wrong">PriceChart()</button><p class="feedback"></p>
+  </div>
+
+  <h2>Read or watch (primary source)</h2>
+  <ul>
+    <li><a href="https://github.com/molefrog/wouter#route-patterns">wouter: route patterns</a> — route parameters and matching. <em>(Primary.)</em></li>
+    <li><a href="https://tanstack.com/query/latest/docs/framework/react/guides/query-keys">TanStack Query: query keys</a> — why every request input belongs in the key. <em>(Primary.)</em></li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams">MDN: URLSearchParams</a> — building query strings safely.</li>
+  </ul>
+
+  <h2>Next</h2>
+  <p class="next">Lesson 8: <b>Shared state with Zustand</b> — trace the currency dropdown from one click to every price on the screen.</p>
+  <div class="lesson-end">
+    <p><strong>Ask me anything.</strong> Pick any arrow in the lifecycle and we can trace it more slowly.</p>
+    <p>Mission: <a href="../MISSION.md">frontend TypeScript, maintain this repo</a></p>
+  </div>
+</div>
+</body>
+</html>
