@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reference · Request Lifecycle</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Reference · Lesson 7 companion</p>
+  <h1>The request lifecycle — URL to UI</h1>
+  <p class="lede">Trace a visible result backward through the component, hook, service, and browser URL to find which layer owns a bug.</p>
+
+  <h2>The complete flow</h2>
+  <pre><code>/coin/bitcoin
+  → Route path="/coin/:id"
+  → useParams() gives id = "bitcoin"
+  → useMarketChart(id, currency, days)
+  → queryKey identifies the cached request
+  → fetchMarketChart builds the endpoint
+  → request&lt;MarketChart&gt; fetches and parses JSON
+  → chartQuery becomes loading, error, or success
+  → CoinPage renders the matching UI</code></pre>
+
+  <h2>Inputs and owners</h2>
+  <table>
+    <tr><td><code>id</code></td><td>URL via <code>useParams</code></td></tr>
+    <tr><td><code>currency</code></td><td>shared Zustand settings store</td></tr>
+    <tr><td><code>days</code></td><td>local <code>useState</code></td></tr>
+    <tr><td>endpoint</td><td>CoinGecko service</td></tr>
+    <tr><td>loading/error/data</td><td>TanStack Query</td></tr>
+    <tr><td>visible result</td><td>React component</td></tr>
+  </table>
+
+  <h2>Query-key rule</h2>
+  <pre><code>queryKey: ['marketChart', id, currency, days]</code></pre>
+  <p>Every value used by <code>queryFn</code> that can change belongs in the key. A different key means different cached data.</p>
+
+  <h2>Render all request states</h2>
+  <pre><code>query.isLoading &amp;&amp; &lt;Loading /&gt;
+query.isError &amp;&amp; &lt;Error onRetry={() =&gt; query.refetch()} /&gt;
+query.data &amp;&amp; &lt;Success data={query.data} /&gt;</code></pre>
+
+  <h2>Where to investigate</h2>
+  <ul>
+    <li>Navigation or parameter problem → route and link.</li>
+    <li>Cache or refetch problem → hook and query key.</li>
+    <li>HTTP or endpoint problem → service.</li>
+    <li>Display or interaction problem → page and child components.</li>
+  </ul>
+
+  <div class="callout"><strong>Primary sources</strong>
+    <a href="https://github.com/molefrog/wouter#route-patterns">wouter route patterns</a> and <a href="https://tanstack.com/query/latest/docs/framework/react/guides/query-keys">TanStack Query keys</a>.</div>
+  <div class="lesson-end">Part of the <a href="../MISSION.md">mission</a> · <a href="../lessons/0006-fetching.html">Lesson 6</a> · <a href="../lessons/0007-request-lifecycle.html">Lesson 7</a></div>
+</div>
+</body>
+</html>

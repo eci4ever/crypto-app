@@ -83,6 +83,18 @@ export default function CoinPage() {
           {chartQuery.isLoading && (
             <div className="flex h-72 items-center justify-center text-slate-500">Loading chart…</div>
           )}
+          {chartQuery.isError && (
+            <div className="flex h-72 flex-col items-center justify-center gap-3 text-red-300">
+              <p>Could not load chart data.</p>
+              <button
+                type="button"
+                onClick={() => chartQuery.refetch()}
+                className="rounded-md border border-red-800 px-3 py-1.5 text-sm transition-colors hover:bg-red-950/40"
+              >
+                Try again
+              </button>
+            </div>
+          )}
           {chartQuery.data?.prices && (
             <PriceChart
               prices={chartQuery.data.prices}
