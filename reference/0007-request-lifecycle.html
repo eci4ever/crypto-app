@@ -39,8 +39,9 @@
 
   <h2>Render all request states</h2>
   <pre><code>query.isLoading &amp;&amp; &lt;Loading /&gt;
-query.isError &amp;&amp; &lt;Error onRetry={() =&gt; query.refetch()} /&gt;
+query.isError &amp;&amp; !query.data &amp;&amp; &lt;Error onRetry={() =&gt; query.refetch()} /&gt;
 query.data &amp;&amp; &lt;Success data={query.data} /&gt;</code></pre>
+  <p>Keep usable cached data visible when only a background refresh fails.</p>
 
   <h2>Where to investigate</h2>
   <ul>

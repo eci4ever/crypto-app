@@ -54,13 +54,13 @@ return request(`/coins/${encodeURIComponent(id)}/market_chart?${params}`)</code>
   <h2>5. Query state drives the render</h2>
   <p>The Promise settles and TanStack Query updates <code>chartQuery</code>. React re-renders the page:</p>
   <pre><code>isLoading  → show “Loading chart…”
-isError    → show an error and retry action
+isError with no data → show an error and retry action
 data       → render &lt;PriceChart prices={...} /&gt;</code></pre>
-  <p>This is the complete loop: an input changes, the query key changes, a request runs, query state changes, and React renders the matching UI.</p>
+  <p>This is the complete loop: an input changes, the query key changes, a request runs, query state changes, and React renders the matching UI. Checking <code>!chartQuery.data</code> avoids replacing a usable cached chart when only a background refresh fails.</p>
 
   <h2>Your edit — complete the lifecycle</h2>
   <p>The page already handles chart loading and success, but not chart failure. In <code>CoinPage.tsx</code>, after the loading block, add:</p>
-  <pre><code>{chartQuery.isError &amp;&amp; (
+  <pre><code>{chartQuery.isError &amp;&amp; !chartQuery.data &amp;&amp; (
   &lt;div className="flex h-72 flex-col items-center justify-center gap-3 text-red-300"&gt;
     &lt;p&gt;Could not load chart data.&lt;/p&gt;
     &lt;button

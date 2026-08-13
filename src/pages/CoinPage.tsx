@@ -83,7 +83,7 @@ export default function CoinPage() {
           {chartQuery.isLoading && (
             <div className="flex h-72 items-center justify-center text-slate-500">Loading chart…</div>
           )}
-          {chartQuery.isError && (
+          {chartQuery.isError && !chartQuery.data && (
             <div className="flex h-72 flex-col items-center justify-center gap-3 text-red-300">
               <p>Could not load chart data.</p>
               <button
