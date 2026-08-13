@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { FiatCode } from '../services/types.ts'
 
 interface SettingsState {
-  currency: string
-  setCurrency: (currency: string) => void
+  currency: FiatCode
+  setCurrency: (currency: FiatCode) => void
 }
 
 export const useSettings = create<SettingsState>()(
