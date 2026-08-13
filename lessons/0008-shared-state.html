@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 8 · Shared State with Zustand</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Lesson 8 · 15 min · <a href="../reference/0008-shared-state.html">reference: Zustand</a> · <a href="../reference/0005-state.html">reference: state</a></p>
+  <h1>Shared state — one currency, many consumers</h1>
+  <p class="lede">Change USD to MYR in the navbar and prices update across the app. One small Zustand store connects that single interaction to every component that cares.</p>
+
+  <div class="callout"><strong>Tied to your mission</strong>
+  Shared state appears whenever distant components must agree: theme, logged-in user, watchlist, or display currency. You need to know who owns it, who changes it, and who re-renders because of it.</div>
+
+  <h2>Why local state is not enough</h2>
+  <p>If <code>Navbar</code> used <code>useState('usd')</code>, only the navbar would know the selection. <code>ListPage</code> and <code>CoinPage</code> are not its children, so passing the value as props would require threading it through <code>App</code>. This is called <b>prop drilling</b>.</p>
+  <p>A store gives unrelated components one shared source of truth:</p>
+  <pre><code>Navbar ──writes──┐
+                 ├── useSettings store
+ListPage ──reads─┤
+CoinPage ──reads─┘</code></pre>
+
+  <h2>The store has state and actions</h2>
+  <p>Open <code>src/stores/settings.ts</code>:</p>
+  <pre><code>interface SettingsState {
+  currency: FiatCode
+  setCurrency: (currency: FiatCode) =&gt; void
+}
+
+export const useSettings = create&lt;SettingsState&gt;()(
+  persist(
+    (set) =&gt; ({
+      currency: 'usd',
+      setCurrency: (currency) =&gt; set({ currency }),
+    }),
+    { name: 'crypto-settings' },
+  ),
+)</code></pre>
+  <ul>
+    <li><code>currency</code> is the shared value.</li>
+    <li><code>setCurrency</code> is an action: the approved way to change it.</li>
+    <li><code>set({ currency })</code> merges the new value into the store and notifies subscribers.</li>
+    <li><code>create&lt;SettingsState&gt;()</code> checks that the implementation matches the interface.</li>
+  </ul>
+
+  <h2>Selectors subscribe components</h2>
+  <p><code>Navbar</code> selects both the value and action:</p>
+  <pre><code>const currency = useSettings((s) =&gt; s.currency)
+const setCurrency = useSettings((s) =&gt; s.setCurrency)</code></pre>
+  <p>The callback is a <b>selector</b>. A component subscribed to <code>currency</code> re-renders when currency changes. A component selecting only <code>setCurrency</code> does not need to re-render for an unrelated store value.</p>
+  <p><code>ListPage</code> selects currency, then uses it in its query:</p>
+  <pre><code>const currency = useSettings((s) =&gt; s.currency)
+const { data } = useMarket(currency)</code></pre>
+  <p>Store update → page re-render → query key changes from <code>['market', 'usd']</code> to <code>['market', 'myr']</code> → MYR data loads. Lesson 7's lifecycle begins again.</p>
+
+  <h2>Persist survives a reload</h2>
+  <p>The <code>persist</code> middleware saves the store under <code>crypto-settings</code> in browser storage. Refresh the page and your currency remains selected. Zustand restores it when the app starts.</p>
+  <div class="callout"><strong>Remember</strong>
+  Zustand holds the live in-memory state. <code>persist</code> copies it to browser storage so it can be restored later.</div>
+
+  <h2>Your edit — protect the shared boundary</h2>
+  <p>The supported currencies already form a union type in <code>src/services/types.ts</code>. Make the store accept only that type:</p>
+  <pre><code>import type { FiatCode } from '../services/types.ts'
+
+interface SettingsState {
+  currency: FiatCode
+  setCurrency: (currency: FiatCode) =&gt; void
+}</code></pre>
+  <p>A browser select still produces a general <code>string</code>, so validate it before calling the typed action in <code>Navbar.tsx</code>:</p>
+  <pre><code>import { isFiatCode } from '../services/coingecko.ts'
+
+function handleCurrencyChange(value: string) {
+  if (isFiatCode(value)) setCurrency(value)
+}
+
+onChange={(e) =&gt; handleCurrencyChange(e.target.value)}</code></pre>
+  <p><code>isFiatCode</code> is a type guard. Inside the <code>if</code>, TypeScript narrows <code>value</code> from any string to a supported <code>FiatCode</code>. Invalid values never enter shared state.</p>
+
+  <h2>Trace one click</h2>
+  <ol>
+    <li>User selects MYR; the browser emits the string <code>'myr'</code>.</li>
+    <li><code>isFiatCode</code> validates and narrows it.</li>
+    <li><code>setCurrency('myr')</code> updates the Zustand store.</li>
+    <li><code>persist</code> saves it; subscribed pages re-render.</li>
+    <li>Query keys change and CoinGecko receives <code>vs_currency=myr</code>.</li>
+    <li>Prices render with <code>RM</code>.</li>
+  </ol>
+
+  <h2>Check yourself</h2>
+  <div class="quiz" data-feedback="Right — shared state lets distant components use the same source of truth.">
+    <p class="q">1. Why is currency stored in Zustand?</p>
+    <button data-answer="wrong">It styles the navbar</button><button data-answer="correct">Many components need it</button><button data-answer="wrong">It replaces fetch</button><button data-answer="wrong">It creates routes</button><p class="feedback"></p>
+  </div>
+  <div class="quiz" data-feedback="Right — selectors subscribe a component to the chosen slice of store state.">
+    <p class="q">2. What does <code>(s) =&gt; s.currency</code> do?</p>
+    <button data-answer="correct">Selects currency</button><button data-answer="wrong">Sets currency</button><button data-answer="wrong">Fetches prices</button><button data-answer="wrong">Saves HTML</button><p class="feedback"></p>
+  </div>
+  <div class="quiz" data-feedback="Right — persist restores saved state after a page reload.">
+    <p class="q">3. What does <code>persist</code> add?</p>
+    <button data-answer="wrong">A React prop</button><button data-answer="wrong">An API endpoint</button><button data-answer="correct">Storage across reloads</button><button data-answer="wrong">A route parameter</button><p class="feedback"></p>
+  </div>
+  <div class="quiz" data-feedback="Right — the guard proves that a general string is one of the supported fiat codes.">
+    <p class="q">4. Why call <code>isFiatCode</code>?</p>
+    <button data-answer="wrong">Format a price</button><button data-answer="wrong">Change the query key</button><button data-answer="wrong">Open the dropdown</button><button data-answer="correct">Validate and narrow</button><p class="feedback"></p>
+  </div>
+
+  <h2>Read or watch (primary source)</h2>
+  <ul>
+    <li><a href="https://zustand.docs.pmnd.rs/getting-started/introduction">Zustand: introduction</a> — stores, actions, and selectors. <em>(Primary.)</em></li>
+    <li><a href="https://zustand.docs.pmnd.rs/middlewares/persist">Zustand: persist middleware</a> — how state survives reloads. <em>(Primary.)</em></li>
+    <li><a href="https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates">TypeScript: type predicates</a> — the mechanism behind <code>isFiatCode</code>.</li>
+  </ul>
+
+  <h2>Next</h2>
+  <p class="next">Lesson 9: <b>Forms and derived data</b> — trace the portfolio form from typed input to calculated gain and loss.</p>
+  <div class="lesson-end">
+    <p><strong>Ask me anything.</strong> Store actions, selectors, persistence, or the type guard are all worth slowing down for.</p>
+    <p>Mission: <a href="../MISSION.md">frontend TypeScript, maintain this repo</a></p>
+  </div>
+</div>
+</body>
+</html>

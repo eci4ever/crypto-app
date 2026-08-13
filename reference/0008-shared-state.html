@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reference · Shared State with Zustand</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Reference · Lesson 8 companion</p>
+  <h1>Shared state with Zustand</h1>
+  <p class="lede">Use a store when distant components need one shared source of truth. Keep one-component state local with <code>useState</code>.</p>
+
+  <h2>Store shape</h2>
+  <pre><code>interface SettingsState {
+  currency: FiatCode                         // state
+  setCurrency: (currency: FiatCode) =&gt; void // action
+}</code></pre>
+
+  <h2>Create and persist</h2>
+  <pre><code>export const useSettings = create&lt;SettingsState&gt;()(
+  persist(
+    (set) =&gt; ({
+      currency: 'usd',
+      setCurrency: (currency) =&gt; set({ currency }),
+    }),
+    { name: 'crypto-settings' },
+  ),
+)</code></pre>
+  <p><code>set</code> updates state and notifies subscribers. <code>persist</code> saves and restores the store using the configured storage key.</p>
+
+  <h2>Select what a component needs</h2>
+  <pre><code>const currency = useSettings((state) =&gt; state.currency)
+const setCurrency = useSettings((state) =&gt; state.setCurrency)</code></pre>
+  <p>A selector returns the slice to subscribe to. Prefer narrow selectors over taking the whole store.</p>
+
+  <h2>Validate values at the boundary</h2>
+  <pre><code>function handleCurrencyChange(value: string) {
+  if (isFiatCode(value)) setCurrency(value)
+}</code></pre>
+  <p>DOM inputs return strings. A type guard validates external input and narrows it before the value enters typed shared state.</p>
+
+  <h2>Currency update flow</h2>
+  <pre><code>select change
+  → type guard
+  → store action
+  → state update + persistence
+  → subscriber re-render
+  → changed query key
+  → new API data
+  → updated prices</code></pre>
+
+  <h2>Local or shared?</h2>
+  <table>
+    <tr><td>Search text</td><td>local <code>useState</code></td></tr>
+    <tr><td>Chart day range</td><td>local <code>useState</code></td></tr>
+    <tr><td>Currency</td><td>shared store</td></tr>
+    <tr><td>Watchlist</td><td>shared persisted store</td></tr>
+  </table>
+
+  <div class="callout"><strong>Primary sources</strong>
+    <a href="https://zustand.docs.pmnd.rs/getting-started/introduction">Zustand introduction</a>, <a href="https://zustand.docs.pmnd.rs/middlewares/persist">persist middleware</a>, and <a href="https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates">TypeScript type predicates</a>.</div>
+  <div class="lesson-end">Part of the <a href="../MISSION.md">mission</a> · <a href="../lessons/0007-request-lifecycle.html">Lesson 7</a> · <a href="../lessons/0008-shared-state.html">Lesson 8</a></div>
+</div>
+</body>
+</html>

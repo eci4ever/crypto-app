@@ -1,5 +1,6 @@
 import { Link } from 'wouter'
 import { FIAT_CURRENCIES } from '../services/types.ts'
+import { isFiatCode } from '../services/coingecko.ts'
 import { useSettings } from '../stores/settings.ts'
 
 const NAV_LINKS = [
@@ -11,6 +12,10 @@ const NAV_LINKS = [
 export default function Navbar() {
   const currency = useSettings((s) => s.currency)
   const setCurrency = useSettings((s) => s.setCurrency)
+
+  function handleCurrencyChange(value: string) {
+    if (isFiatCode(value)) setCurrency(value)
+  }
 
   return (
     <header className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
@@ -31,7 +36,7 @@ export default function Navbar() {
           <select
             aria-label="Display currency"
             value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
+            onChange={(e) => handleCurrencyChange(e.target.value)}
             className="ml-2 rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200 outline-none focus:border-emerald-500"
           >
             {FIAT_CURRENCIES.map((code) => (
