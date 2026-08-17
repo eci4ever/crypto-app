@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 9 · Forms and Derived Data</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Lesson 9 · 15 min · <a href="../reference/0009-forms-derived-data.html">reference: forms and derived data</a> · <a href="../reference/0005-state.html">reference: state</a></p>
+  <h1>Forms and derived data — from text to profit</h1>
+  <p class="lede">The portfolio form starts with strings, turns them into safe numbers, stores a position, and calculates what that position is worth today.</p>
+
+  <div class="callout"><strong>Tied to your mission</strong>
+  Forms sit at the boundary between a person and your TypeScript code. Learning to parse and validate their values lets you add settings, filters, and data-entry features safely.</div>
+
+  <h2>Controlled inputs keep draft state</h2>
+  <p>Open <code>src/pages/PortfolioPage.tsx</code>. Each input receives its value from React state and writes changes back into that state:</p>
+  <pre><code>const [amount, setAmount] = useState('')
+
+&lt;input
+  type="number"
+  value={amount}
+  onChange={(e) =&gt; setAmount(e.target.value)}
+/&gt;</code></pre>
+  <p>This is a <b>controlled input</b>. React state is the source of truth for what appears in the box. React requires a controlled input's <code>onChange</code> handler to update its backing value (<a href="https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable">React input reference</a>).</p>
+  <p>Notice that <code>amount</code> is a string, even though the input has <code>type="number"</code>. Browser input values are strings. Keeping the draft as a string also allows the box to be empty.</p>
+
+  <h2>Submission is a boundary</h2>
+  <pre><code>function handleSubmit(e: FormEvent) {
+  e.preventDefault()
+  const amountNum = Number(amount)
+  const priceNum = Number(buyPrice)
+
+  if (!selectedCoin || !Number.isFinite(amountNum) ||
+      !Number.isFinite(priceNum) || amountNum &lt;= 0) {
+    return
+  }
+
+  add({
+    id: selectedCoin.id,
+    amount: amountNum,
+    buyPrice: priceNum,
+    // ...
+  })
+}</code></pre>
+  <ol>
+    <li><code>preventDefault()</code> stops the browser's normal form navigation and page reload (<a href="https://react.dev/reference/react-dom/components/input#reading-the-input-values-when-submitting-a-form">React form submission guide</a>).</li>
+    <li><code>Number(...)</code> converts both draft strings into numbers.</li>
+    <li>The <code>if</code> rejects invalid data with an early return.</li>
+    <li><code>add</code> receives a typed <code>Position</code>, not raw form strings.</li>
+  </ol>
+
+  <h2>Stored data and derived data are different</h2>
+  <p>The portfolio store saves facts entered by the user: coin, amount, and buy price. It does not save profit.</p>
+  <pre><code>const currentValue = p.amount * price
+const costBasis = p.amount * p.buyPrice
+const profit = currentValue - costBasis
+const profitPercent = costBasis &gt; 0
+  ? (profit / costBasis) * 100
+  : 0</code></pre>
+  <p>These values are <b>derived data</b>: values calculated from existing state and the latest market price. Recalculating them avoids stale data. When a coin price changes, profit changes automatically without rewriting the saved position.</p>
+
+  <h2>Why <code>useMemo</code> appears here</h2>
+  <pre><code>const rows = useMemo(
+  () =&gt; positions.map(/* calculate each row */),
+  [positions, pricesUsd],
+)</code></pre>
+  <p>React reuses the previous result until <code>positions</code> or <code>pricesUsd</code> changes. Those values form the dependency array. <code>useMemo</code> caches a calculation between re-renders as an optimization; the calculation must not depend on it for correctness (<a href="https://react.dev/reference/react/useMemo">React <code>useMemo</code> reference</a>).</p>
+
+  <h2>Your edit — reject a zero buy price</h2>
+  <p>The form currently rejects a non-positive amount, but it still accepts a buy price of zero. Add the matching validation in <code>handleSubmit</code>:</p>
+  <pre><code>if (
+  !selectedCoin ||
+  !Number.isFinite(amountNum) ||
+  !Number.isFinite(priceNum) ||
+  amountNum &lt;= 0 ||
+  priceNum &lt;= 0
+) {
+  return
+}</code></pre>
+  <p>Then run <code>npm run build</code>. Try to explain why the check belongs after conversion and before <code>add</code>.</p>
+  <div class="callout"><strong>Small trap</strong>
+  HTML attributes such as <code>min="0"</code> help the browser UI, but your submit handler must still protect the application boundary. UI hints are not a replacement for validation.</div>
+
+  <h2>Trace one submission</h2>
+  <ol>
+    <li>The user types <code>"2"</code> and <code>"30000"</code>; both drafts are strings.</li>
+    <li>Submit prevents a page reload.</li>
+    <li>The strings become the numbers <code>2</code> and <code>30000</code>.</li>
+    <li>Validation permits the numbers and <code>add</code> updates the persisted store.</li>
+    <li>The component re-renders; <code>rows</code> derives cost, value, and profit.</li>
+  </ol>
+
+  <h2>Check yourself</h2>
+  <div class="quiz" data-feedback="Right — DOM input values arrive as strings, even for number inputs.">
+    <p class="q">1. What is the type of <code>e.target.value</code> here?</p>
+    <button data-answer="correct">string</button><button data-answer="wrong">number</button><button data-answer="wrong">Position</button><button data-answer="wrong">FormEvent</button><p class="feedback"></p>
+  </div>
+  <div class="quiz" data-feedback="Right — profit can always be recalculated from saved facts and the current price.">
+    <p class="q">2. Why is profit derived instead of stored?</p>
+    <button data-answer="wrong">React cannot store numbers</button><button data-answer="correct">Its source values change</button><button data-answer="wrong">Forms always require useMemo</button><button data-answer="wrong">CoinGecko calculates every profit</button><p class="feedback"></p>
+  </div>
+  <div class="quiz" data-feedback="Right — preventDefault keeps the client-side app running instead of performing the browser's normal form navigation.">
+    <p class="q">3. Why call <code>e.preventDefault()</code>?</p>
+    <button data-answer="wrong">Convert the entered amount</button><button data-answer="wrong">Save data into Zustand</button><button data-answer="correct">Stop the browser reload</button><button data-answer="wrong">Calculate the current profit</button><p class="feedback"></p>
+  </div>
+  <div class="quiz" data-feedback="Right — both dependencies can change the calculated rows.">
+    <p class="q">4. When should the memoized rows be recalculated?</p>
+    <button data-answer="wrong">Only after form submission</button><button data-answer="wrong">Once during every second</button><button data-answer="correct">When either dependency changes</button><button data-answer="wrong">Only after browser reload</button><p class="feedback"></p>
+  </div>
+
+  <h2>Read or watch (primary source)</h2>
+  <ul>
+    <li><a href="https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable">React: controlling an input with state</a></li>
+    <li><a href="https://react.dev/reference/react-dom/components/form">React: form component</a></li>
+    <li><a href="https://react.dev/reference/react/useMemo">React: <code>useMemo</code></a></li>
+  </ul>
+
+  <h2>Next</h2>
+  <p class="next">Lesson 10: <b>Rendering lists and stable keys</b> — understand how portfolio rows are created, updated, and removed.</p>
+  <div class="lesson-end">
+    <p><strong>Ask me anything.</strong> Controlled inputs, conversion, validation, or derived values are all worth slowing down for.</p>
+    <p>Mission: <a href="../MISSION.md">frontend TypeScript, maintain this repo</a></p>
+  </div>
+</div>
+</body>
+</html>

@@ -18,6 +18,12 @@ Curated high-trust sources for the mission: writing TypeScript frontend code and
   The official JSX reference. Use for: the exact differences between JSX and HTML (`className`, closing tags, `{}` escapes).
 - [React 19 release notes — react.dev/blog](https://react.dev/blog/2024/12/05/react-19)
   What's new in the version this repo runs. Use for: knowing which features exist (e.g. refs as props, actions).
+- [React input reference — react.dev](https://react.dev/reference/react-dom/components/input)
+  Official behavior for controlled inputs, numeric input values, and form submission. Use for: building and validating React forms.
+- [React form reference — react.dev](https://react.dev/reference/react-dom/components/form)
+  Official API for form submission and React 19 form actions. Use for: deciding how a form should submit data.
+- [React useMemo reference — react.dev](https://react.dev/reference/react/useMemo)
+  Official definition, dependency rules, and caveats. Use for: caching derived calculations without treating them as state.
 - [JavaScript Guide — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide)
   The canonical JavaScript reference. Use for: ES modules, functions, arrow functions, destructuring, `map`, promises/fetch.
 - [JavaScript modules — MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)

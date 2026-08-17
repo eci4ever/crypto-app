@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reference · Forms and Derived Data</title>
+<link rel="stylesheet" href="../assets/lesson.css" />
+</head>
+<body>
+<div class="wrap">
+  <p class="meta">Reference · Lesson 9 companion</p>
+  <h1>Forms and derived data</h1>
+  <p class="lede">Keep editable drafts as strings, convert and validate at submission, and calculate values that can be derived from existing state.</p>
+
+  <h2>Controlled input</h2>
+  <pre><code>const [amount, setAmount] = useState('')
+
+&lt;input
+  value={amount}
+  onChange={(event) =&gt; setAmount(event.target.value)}
+/&gt;</code></pre>
+  <p><code>value</code> reads from state. <code>onChange</code> writes to state. Browser input values are strings.</p>
+
+  <h2>Safe submit sequence</h2>
+  <pre><code>draft strings
+  → Number(...)
+  → validate
+  → typed store action
+  → reset drafts</code></pre>
+  <pre><code>function handleSubmit(event: FormEvent) {
+  event.preventDefault()
+  const amountNum = Number(amount)
+  if (!Number.isFinite(amountNum) || amountNum &lt;= 0) return
+  // use amountNum safely
+}</code></pre>
+
+  <h2>Stored versus derived</h2>
+  <table>
+    <tr><td>Amount held</td><td>stored user fact</td></tr>
+    <tr><td>Buy price</td><td>stored user fact</td></tr>
+    <tr><td>Current market price</td><td>fetched server state</td></tr>
+    <tr><td>Current value</td><td>derived: amount × current price</td></tr>
+    <tr><td>Profit</td><td>derived: current value − cost basis</td></tr>
+  </table>
+
+  <h2>Memoized calculation</h2>
+  <pre><code>const rows = useMemo(
+  () =&gt; calculateRows(positions, pricesUsd),
+  [positions, pricesUsd],
+)</code></pre>
+  <p>The dependency array lists every outside value used by the calculation. <code>useMemo</code> caches a calculation; it is not persistent state.</p>
+
+  <h2>Useful rules</h2>
+  <ul>
+    <li>Do not trust a value merely because the input has <code>type="number"</code>.</li>
+    <li>Convert once at the boundary, then work with numbers.</li>
+    <li>Validate before updating shared state.</li>
+    <li>Do not store a value you can cheaply derive from existing sources of truth.</li>
+    <li>Use <code>useMemo</code> for useful optimization, not for correctness.</li>
+  </ul>
+
+  <div class="callout"><strong>Primary sources</strong>
+    <a href="https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable">React controlled inputs</a>, <a href="https://react.dev/reference/react-dom/components/form">React forms</a>, and <a href="https://react.dev/reference/react/useMemo">React useMemo</a>.</div>
+  <div class="lesson-end">Part of the <a href="../MISSION.md">mission</a> · <a href="../lessons/0008-shared-state.html">Lesson 8</a> · <a href="../lessons/0009-forms-derived-data.html">Lesson 9</a></div>
+</div>
+</body>
+</html>
